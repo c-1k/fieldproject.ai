@@ -1,0 +1,28 @@
+# Turf — Multi-Agent Coordination
+
+> Turf is a CLI tool that coordinates AI coding agents working in parallel on the same codebase. It prevents file conflicts through scope leasing, isolates agents in separate git worktrees, and merges their work through an ordered queue. Install: `npm install @c-1k/turf`
+
+## Getting Started
+
+- [Quickstart](https://github.com/c-1k/fermion/blob/main/docs/QUICKSTART.md): Install and configure Turf in 5 minutes
+- [API Reference](https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md): Complete CLI command reference
+
+## Core Concepts
+
+- [Scope Leasing](https://github.com/c-1k/fermion/blob/main/docs/GOVERNANCE.md): TTL-based file ownership via glob patterns
+- [Workspace Isolation](https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md#workspace): Isolated git worktrees per agent
+- [Merge Queue](https://github.com/c-1k/fermion/blob/main/docs/DAEMON.md): Ordered integration pipeline
+- [Hooks](https://github.com/c-1k/fermion/blob/main/docs/HOOKS.md): Pre-commit scope enforcement
+
+## Integration Examples
+
+- [Claude Code](https://github.com/c-1k/fermion/blob/main/examples/two-agents/README.md): Two-agent coordination
+- [Cursor](https://github.com/c-1k/fermion/blob/main/examples/cursor-integration/README.md): Cursor workspace setup
+- [Aider](https://github.com/c-1k/fermion/blob/main/examples/aider-integration/README.md): Aider multi-agent coordination
+- [Copilot](https://github.com/c-1k/fermion/blob/main/examples/copilot-integration/README.md): GitHub Copilot workspace integration
+
+## Optional
+
+- [Troubleshooting](https://github.com/c-1k/fermion/blob/main/docs/TROUBLESHOOTING.md): Common issues and solutions
+- [FAQ](https://github.com/c-1k/fermion/blob/main/docs/FAQ.md): Frequently asked questions
+- [Design Decisions](https://github.com/c-1k/fermion/blob/main/docs/DESIGN-DECISIONS.md): Architecture rationale

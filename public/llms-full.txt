@@ -1,0 +1,111 @@
+# Turf — Multi-Agent Coordination for AI Coding Agents
+
+## What is Turf?
+
+Turf is a CLI tool that coordinates AI coding agents working in parallel on the same codebase. When you run multiple AI agents (Claude Code, Cursor, Aider, Copilot, Devin, etc.) simultaneously, they inevitably edit the same files and create merge conflicts. Turf prevents this through three mechanisms:
+
+1. **Scope Leasing**: Agents claim exclusive ownership of file patterns (e.g., `src/auth/**`) with a time-to-live. No two agents can claim overlapping scopes.
+2. **Workspace Isolation**: Each agent gets its own git worktree — a separate working directory with its own branch, sharing the same git history.
+3. **Merge Queue**: When agents finish, they submit work to an ordered queue. A daemon process merges items sequentially, eliminating race conditions.
+
+## Installation
+
+```bash
+npm install @c-1k/turf
+npx @c-1k/turf init
+```
+
+This creates a `.coord/` directory in your repo containing coordination state (leases, queue, tasks, events).
+
+## Core Commands
+
+### Scope Leasing
+```bash
+# Claim exclusive ownership of files
+turf claim --scope "src/auth/**" --intent "Implement JWT middleware" --ttl-min 60
+
+# Release a scope lease
+turf release --scope "src/auth/**"
+
+# Check active leases
+turf status --verbose
+```
+
+### Workspace Isolation
+```bash
+# Allocate an isolated worktree for an agent
+turf workspace allocate --name agent-1 --branch feat/auth --base main --worker agent-1
+
+# Release a worktree when done
+turf workspace release --name agent-1
+```
+
+### Task Management
+```bash
+# Create a scoped task
+turf task create --title "Implement auth" --scope "src/auth/**" --priority high
+
+# Claim the next available task (acquires scope lease automatically)
+turf task claim --worker agent-1
+```
+
+### Merge Queue
+```bash
+# Submit completed work (pushes branch, enqueues, releases lease)
+turf done --risk low --gates fast --notes "Implemented JWT auth middleware"
+
+# Start the merge daemon
+turf daemon start
+
+# Check queue status
+turf queue
+```
+
+### Worker Management
+```bash
+# Register a worker
+turf worker register --id agent-1
+
+# Send heartbeat
+turf worker heartbeat --id agent-1
+```
+
+## Typical Agent Workflow
+
+```
+1. turf workspace allocate --name agent-1 --branch feat/task --base main
+2. turf claim --scope "src/feature/**" --ttl-min 60
+3. [agent edits files within scope]
+4. [agent runs tests, linting, type checking]
+5. git add -A && git commit -m "feat: implement feature"
+6. turf done --risk low --gates fast --notes "Implemented feature"
+7. turf workspace release --name agent-1
+```
+
+## Compatible Agents
+
+Turf works with any AI coding agent that can execute CLI commands:
+- Claude Code (Anthropic)
+- Cursor
+- Aider
+- GitHub Copilot Workspace
+- Devin (Cognition)
+- Windsurf (Codeium)
+- Roo Code
+- Any custom agent with shell access
+
+## Key Design Decisions
+
+- **File-based state**: All coordination state lives in `.coord/` as JSON files. No database, no server, no network dependency.
+- **Git-native**: Built on git worktrees and branches. Works with any git hosting provider.
+- **TTL-based leases**: Scope claims expire automatically, preventing deadlocks from crashed agents.
+- **Agent-agnostic**: No SDK integration required. If your agent can run `turf claim`, it can coordinate.
+- **Deterministic merges**: Queue items are merged in order, not in parallel. This eliminates a class of merge conflicts.
+
+## Links
+
+- Source: https://github.com/c-1k/fermion
+- npm: https://www.npmjs.com/package/@c-1k/turf
+- Documentation: https://github.com/c-1k/fermion/tree/main/docs
+- Quickstart: https://github.com/c-1k/fermion/blob/main/docs/QUICKSTART.md
+- API Reference: https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md
