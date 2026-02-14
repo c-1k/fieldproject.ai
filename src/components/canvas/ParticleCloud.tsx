@@ -51,7 +51,7 @@ const CLOUD_OUTER_MOBILE = 4.5;
 
 /* ── Vortex easter egg ── */
 const VORTEX_ZONE_RADIUS = 2.5;    // world-space units from center to trigger
-const VORTEX_SPEED = 0.5;           // ~56s/rev inner ring, ~97s outer — glacial
+const VORTEX_SPEED = 0.9;           // inner ring 21-31s/rev, outer ~46s, cloud ~103s
 const VORTEX_ENGAGE = 0.12;         // slow onset (~8s to full strength)
 const VORTEX_DISENGAGE = 0.12;
 
