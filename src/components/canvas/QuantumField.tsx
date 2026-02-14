@@ -16,7 +16,13 @@ import ParticleCloud from "./ParticleCloud";
 import { useIsMobile, usePrefersReducedMotion } from "@/lib/useMobile";
 
 
-function Scene({ count, compact }: { count: number; compact: boolean }) {
+interface SceneProps {
+  count: number;
+  compact: boolean;
+  formationText?: string;
+}
+
+function Scene({ count, compact, formationText }: SceneProps) {
   return (
     <>
       <ambientLight intensity={0.15} color="#8ba4c4" />
@@ -28,14 +34,17 @@ function Scene({ count, compact }: { count: number; compact: boolean }) {
       <pointLight position={[0, 0, 2]} intensity={2.5} distance={6} color="#c8d8ec" />
       <pointLight position={[0, 0, 0]} intensity={1.2} distance={3} color="#e0e8f4" />
 
-      <ParticleCloud count={count} layout="text" compact={compact} />
+      <ParticleCloud count={count} formationText={formationText} compact={compact} />
       <AdaptiveDpr pixelated />
     </>
   );
 }
 
-export default function QuantumField() {
+interface QuantumFieldProps {
+  formationText?: string;
+}
 
+export default function QuantumField({ formationText }: QuantumFieldProps) {
   const isMobile = useIsMobile();
   const reducedMotion = usePrefersReducedMotion();
 
@@ -76,7 +85,7 @@ export default function QuantumField() {
         dpr={dpr}
         gl={{ antialias: !isMobile, alpha: true, powerPreference: "default" }}
       >
-        <Scene count={particleCount} compact={isMobile} />
+        <Scene count={particleCount} compact={isMobile} formationText={formationText} />
         {postProcessing}
       </Canvas>
     </div>

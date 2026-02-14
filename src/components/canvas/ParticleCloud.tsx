@@ -6,11 +6,9 @@ import * as THREE from "three";
 import { PARTICLE_COLORS } from "@/lib/constants";
 import { particleVertexShader, particleFragmentShader } from "@/shaders/particle";
 
-type LayoutMode = "text";
-
 interface ParticleCloudProps {
   count?: number;
-  layout?: LayoutMode;
+  formationText?: string;
   compact?: boolean;
 }
 
@@ -94,7 +92,7 @@ const SCROLL_FORMATION_END = 0.15;   // fully formed by 15% scroll (~leaving her
 
 export default function ParticleCloud({
   count = 5500,
-  layout = "text",
+  formationText = "FIELD PROJECT",
   compact = false,
 }: ParticleCloudProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -130,14 +128,15 @@ export default function ParticleCloud({
   const [textPositions, setTextPositions] = useState<[number, number][]>([]);
 
   useEffect(() => {
-    const positions = sampleTextPositions("FIELD PROJECT", count);
+    const positions = sampleTextPositions(formationText, count);
     setTextPositions(positions);
-  }, [count]);
+  }, [count, formationText]);
 
   /* ── Particle data ── */
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const entropyPositions = new Float32Array(count * 3);
+    const ringTargets = new Float32Array(count * 3);
     const textTargets = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const colorIndices = new Uint8Array(count);
@@ -176,6 +175,7 @@ export default function ParticleCloud({
     return {
       positions,
       entropyPositions,
+      ringTargets,
       textTargets,
       scales,
       colorIndices,
@@ -291,7 +291,28 @@ export default function ParticleCloud({
     handleMouseLeave,
   ]);
 
-  /* ── Compute text formation targets ── */
+  /* ── Compute ring formation targets (cursor-driven, no text) ── */
+  useEffect(() => {
+    const innerR = compact ? 1.2 : 2.5;
+    const outerR = compact ? 3.0 : 6.5;
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      // Uniform area distribution within annulus
+      const t = Math.random();
+      const radius = Math.sqrt(
+        innerR * innerR + t * (outerR * outerR - innerR * innerR),
+      );
+      const flatness = 0.35 + 0.15 * Math.random();
+
+      particles.ringTargets[i * 3] = Math.cos(angle) * radius;
+      particles.ringTargets[i * 3 + 1] =
+        Math.sin(angle) * radius * flatness;
+      particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+    }
+  }, [count, compact, particles.ringTargets]);
+
+  /* ── Compute text formation targets (scroll-driven) ── */
   useEffect(() => {
     if (textPositions.length === 0) return;
 
@@ -331,7 +352,7 @@ export default function ParticleCloud({
         particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
       }
     }
-  }, [layout, count, compact, particles.textTargets, textPositions]);
+  }, [count, compact, particles.textTargets, textPositions]);
 
   /* ── Per-frame animation ── */
   useFrame((state, delta) => {
@@ -402,17 +423,26 @@ export default function ParticleCloud({
       let y = particles.positions[i * 3 + 1]!;
       let z = particles.positions[i * 3 + 2]!;
 
-      // ── Blend target: entropy ↔ text formation ──
+      // ── Blend target: entropy → ring (cursor) → text (scroll) ──
       const ex = particles.entropyPositions[i * 3]!;
       const ey = particles.entropyPositions[i * 3 + 1]!;
       const ez = particles.entropyPositions[i * 3 + 2]!;
+      const rx = particles.ringTargets[i * 3]!;
+      const ry = particles.ringTargets[i * 3 + 1]!;
+      const rz = particles.ringTargets[i * 3 + 2]!;
       const tx = particles.textTargets[i * 3]!;
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
 
-      const effectiveX = ex + (tx - ex) * strength;
-      const effectiveY = ey + (ty - ey) * strength;
-      const effectiveZ = ez + (tz - ez) * strength;
+      // Formation target: ring when no scroll, text when scrolled
+      const ftx = rx + (tx - rx) * scrollStrength;
+      const fty = ry + (ty - ry) * scrollStrength;
+      const ftz = rz + (tz - rz) * scrollStrength;
+
+      // Blend entropy → formation target
+      const effectiveX = ex + (ftx - ex) * strength;
+      const effectiveY = ey + (fty - ey) * strength;
+      const effectiveZ = ez + (ftz - ez) * strength;
 
       // Lerp toward effective target
       x += (effectiveX - x) * LERP_SPEED * dt;
