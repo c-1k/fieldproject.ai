@@ -12,7 +12,6 @@ interface ParticleCloudProps {
   count?: number;
   layout?: LayoutMode;
   compact?: boolean;
-  scrollProgress?: number;
 }
 
 /* ── Tensor network parameters ── */
@@ -96,7 +95,6 @@ export default function ParticleCloud({
   count = 5500,
   layout = "text",
   compact = false,
-  scrollProgress = 0,
 }: ParticleCloudProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
@@ -106,8 +104,6 @@ export default function ParticleCloud({
   const frameCount = useRef(0);
   const compactRef = useRef(compact);
   compactRef.current = compact;
-  const scrollRef = useRef(scrollProgress);
-  scrollRef.current = scrollProgress;
   const { camera } = useThree();
 
   /* ── Interaction tracking ── */
@@ -347,10 +343,12 @@ export default function ParticleCloud({
       lastInteractTime.current = time;
     }
 
-    // ── Scroll-driven formation strength ──
+    // ── Scroll-driven formation strength (read DOM directly — no React re-renders) ──
+    const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollProgress = scrollMax > 0 ? window.scrollY / scrollMax : 0;
     const scrollRange = SCROLL_FORMATION_END - SCROLL_FORMATION_START;
     const scrollStrength = Math.min(
-      Math.max((scrollRef.current - SCROLL_FORMATION_START) / scrollRange, 0),
+      Math.max((scrollProgress - SCROLL_FORMATION_START) / scrollRange, 0),
       1,
     );
 
