@@ -140,11 +140,11 @@ export default function ParticleCloud({
   const vortexStrength = useRef(0);
   const vortexTime = useRef(0);
 
-  // Random 3D spin axis — unique every visit, biased toward Z
-  // so particles don't flood the title text area
+  // Random 3D spin axis — unique every visit
+  // Tilted 25–55° from Z so orbital plane has visible depth
   const spinAxis = useRef<{ x: number; y: number; z: number } | null>(null);
   if (!spinAxis.current) {
-    const tilt = Math.random() * 0.6; // 0–34° from Z axis
+    const tilt = 0.44 + Math.random() * 0.52; // 25–55° from Z axis
     const azimuth = Math.random() * Math.PI * 2;
     spinAxis.current = {
       x: Math.sin(tilt) * Math.cos(azimuth),
