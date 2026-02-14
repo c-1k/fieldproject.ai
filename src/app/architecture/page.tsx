@@ -28,18 +28,18 @@ function FlowConnector({
 }) {
   return (
     <div className="flex flex-col items-center py-5 sm:py-8">
-      <div className="w-px h-5 bg-gradient-to-b from-white/[0.04] to-white/[0.08]" />
+      <div className="w-px h-5 bg-gradient-to-b from-white/[0.06] to-white/[0.12]" />
       <div className="py-2.5 px-4 sm:px-6 text-center">
-        <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.12em] text-white/20 block">
+        <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.12em] text-white/40 block">
           {label}
         </span>
         {sublabel && (
-          <span className="text-[9px] font-mono text-white/10 block mt-0.5">
+          <span className="text-[9px] font-mono text-white/25 block mt-0.5">
             {sublabel}
           </span>
         )}
       </div>
-      <svg width="10" height="16" className="text-white/12">
+      <svg width="10" height="16" className="text-white/25">
         <path
           d="M5,0 L5,11 M2,8 L5,14 L8,8"
           stroke="currentColor"
@@ -68,7 +68,7 @@ function ArchAnnotation({
   return (
     <div className="space-y-3">
       <div>
-        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/15 block mb-1">
+        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/35 block mb-1">
           Receives
         </span>
         <p className="text-[var(--text-secondary)] font-mono text-xs leading-relaxed">
@@ -76,7 +76,7 @@ function ArchAnnotation({
         </p>
       </div>
       <div>
-        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/15 block mb-1">
+        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/35 block mb-1">
           Outputs
         </span>
         <p className="text-[var(--text-secondary)] font-mono text-xs leading-relaxed">
@@ -89,10 +89,10 @@ function ArchAnnotation({
         </p>
       )}
       <div>
-        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/10 block mb-1">
+        <span className="text-[10px] font-mono tracking-[0.15em] uppercase text-white/25 block mb-1">
           Must Never
         </span>
-        <p className="text-white/15 font-mono text-[10px] leading-relaxed">
+        <p className="text-white/30 font-mono text-[10px] leading-relaxed">
           {constraint}
         </p>
       </div>
@@ -151,7 +151,7 @@ export default function ArchitecturePage() {
           <div className="mb-12 sm:mb-20">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px flex-1 bg-gradient-to-r from-white/[0.06] to-transparent" />
-              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/25">
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/40">
                 I — The Canonical Pipeline
               </span>
               <div className="h-px flex-1 bg-gradient-to-l from-white/[0.06] to-transparent" />
@@ -161,7 +161,7 @@ export default function ArchitecturePage() {
               particle may be bypassed.
             </p>
             {/* Inline flow */}
-            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-mono text-white/15 mt-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-mono text-white/30 mt-4">
               {CORE_PARTICLES.map((id, i) => (
                 <span key={id} className="flex items-center gap-2">
                   <span>{PARTICLES[id].name}</span>
@@ -184,7 +184,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: wide1.color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {wide1.subtitle}
               </p>
               <ArchAnnotation
@@ -212,7 +212,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: pair1[0].color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {pair1[0].subtitle}
               </p>
               <ArchAnnotation
@@ -234,7 +234,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: pair1[1].color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {pair1[1].subtitle}
               </p>
               <ArchAnnotation
@@ -248,7 +248,7 @@ export default function ArchitecturePage() {
 
           {/* Fermion ↔ Higgs consultation badge */}
           <div className="flex items-center justify-center py-2 mb-2">
-            <span className="text-[9px] font-mono tracking-[0.1em] text-white/12 border border-white/[0.04] rounded px-2.5 py-1">
+            <span className="text-[9px] font-mono tracking-[0.1em] text-white/30 border border-white/[0.08] rounded px-2.5 py-1">
               Fermion ←→ Higgs : policy query · allow | deny | filter
             </span>
           </div>
@@ -270,7 +270,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: wide2.color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {wide2.subtitle}
               </p>
               <ArchAnnotation
@@ -304,7 +304,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: pair2[0].color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {pair2[0].subtitle}
               </p>
               <ArchAnnotation
@@ -326,7 +326,7 @@ export default function ArchitecturePage() {
                   style={{ backgroundColor: pair2[1].color }}
                 />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-5">
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-5">
                 {pair2[1].subtitle}
               </p>
               <ArchAnnotation
@@ -340,7 +340,7 @@ export default function ArchitecturePage() {
 
           {/* Photon → Neutrino flow badge */}
           <div className="flex items-center justify-center pt-4">
-            <span className="text-[9px] font-mono tracking-[0.1em] text-white/12 border border-white/[0.04] rounded px-2.5 py-1">
+            <span className="text-[9px] font-mono tracking-[0.1em] text-white/30 border border-white/[0.08] rounded px-2.5 py-1">
               Photon → Neutrino : audit records · ConnectorResult + latency +
               cost
             </span>
@@ -352,7 +352,7 @@ export default function ArchitecturePage() {
           <div className="mb-12 sm:mb-20">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px flex-1 bg-gradient-to-r from-white/[0.04] to-transparent" />
-              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/15">
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/40">
                 II — Field Operators
               </span>
               <div className="h-px flex-1 bg-gradient-to-l from-white/[0.04] to-transparent" />
@@ -382,7 +382,7 @@ export default function ArchitecturePage() {
                       style={{ backgroundColor: p.color }}
                     />
                   </div>
-                  <p className="text-[10px] font-mono tracking-wide uppercase text-white/15 mb-3">
+                  <p className="text-[10px] font-mono tracking-wide uppercase text-white/30 mb-3">
                     {p.subtitle}
                   </p>
                   <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-3">
@@ -393,10 +393,10 @@ export default function ArchitecturePage() {
                     {connections.map((conn) => (
                       <span
                         key={conn.target}
-                        className="inline-flex items-center gap-1.5 text-[10px] font-mono text-white/20 border border-white/[0.06] rounded px-2 py-0.5"
+                        className="inline-flex items-center gap-1.5 text-[10px] font-mono text-white/35 border border-white/[0.10] rounded px-2 py-0.5"
                       >
                         → {conn.target}
-                        <span className="text-white/10">({conn.label})</span>
+                        <span className="text-white/25">({conn.label})</span>
                       </span>
                     ))}
                   </div>
@@ -410,7 +410,7 @@ export default function ArchitecturePage() {
         <section className="mb-16 sm:mb-24">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px flex-1 bg-gradient-to-r from-white/[0.04] to-transparent" />
-            <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/12">
+            <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/40">
               III — Connection Index
             </span>
             <div className="h-px flex-1 bg-gradient-to-l from-white/[0.04] to-transparent" />
@@ -424,19 +424,19 @@ export default function ArchitecturePage() {
                   key={i}
                   className="flex items-baseline gap-2 text-[11px] font-mono"
                 >
-                  <span className="text-white/20">
+                  <span className="text-white/45">
                     {PARTICLES[flow.from].name}
                   </span>
-                  <span className="text-white/8">→</span>
-                  <span className="text-white/20">
+                  <span className="text-white/25">→</span>
+                  <span className="text-white/45">
                     {PARTICLES[flow.to].name}
                   </span>
-                  <span className="text-white/10 ml-1">{flow.label}</span>
+                  <span className="text-white/30 ml-1">{flow.label}</span>
                 </div>
               ))}
             </div>
 
-            <div className="h-px bg-white/[0.03] mb-6" />
+            <div className="h-px bg-white/[0.06] mb-6" />
 
             {/* Operator connections */}
             <div className="space-y-2">
@@ -447,12 +447,12 @@ export default function ArchitecturePage() {
                     key={p.id}
                     className="flex items-baseline gap-2 text-[11px] font-mono"
                   >
-                    <span className="text-white/20">{p.name}</span>
-                    <span className="text-white/8">→</span>
-                    <span className="text-white/15">
+                    <span className="text-white/45">{p.name}</span>
+                    <span className="text-white/25">→</span>
+                    <span className="text-white/35">
                       {connections.map((c) => c.target).join(", ")}
                     </span>
-                    <span className="text-white/10 ml-1">
+                    <span className="text-white/25 ml-1">
                       {connections.map((c) => c.label).join(" · ")}
                     </span>
                   </div>
@@ -461,7 +461,7 @@ export default function ArchitecturePage() {
             </div>
 
             {/* Particle count */}
-            <p className="text-[10px] font-mono text-white/8 text-center mt-8">
+            <p className="text-[10px] font-mono text-white/20 text-center mt-8">
               6 CORE + 4 OPERATORS = 10 PARTICLES
             </p>
           </div>
