@@ -44,7 +44,7 @@ export default function QuantumField({ scrollProgress }: QuantumFieldProps) {
   const reducedMotion = usePrefersReducedMotion();
 
   // Fewer particles on mobile; none if reduced motion
-  const particleCount = reducedMotion ? 0 : isMobile ? 1200 : 3000;
+  const particleCount = reducedMotion ? 0 : isMobile ? 2200 : 5500;
 
   // Lower DPR on mobile for performance
   const dpr: [number, number] = isMobile ? [1, 1.5] : [1, 2];

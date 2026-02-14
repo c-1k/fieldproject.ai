@@ -15,10 +15,9 @@ interface ParticleCloudProps {
 }
 
 /* ── Tensor network parameters ── */
-const NODE_COUNT = 150; // reduced from 350 — cuts O(n²) by ~5x
+const NODE_COUNT = 150;
 const MAX_LINES = 600;
-const RECOMPUTE_EVERY = 15; // less frequent recomputation
-
+const RECOMPUTE_EVERY = 15;
 const CONN_DIST = 0.45;
 
 /* ── Animation constants ── */
@@ -30,6 +29,16 @@ const JITTER_AMP = 0.0004;
 const MOUSE_RADIUS = 2.5;
 const MOUSE_RADIUS_SQ = MOUSE_RADIUS * MOUSE_RADIUS;
 const MOUSE_FORCE = 0.08;
+
+/* ── Entropy ↔ formation transition ── */
+const ENTROPY_SPREAD_X = 24;
+const ENTROPY_SPREAD_Y = 16;
+const ENTROPY_SPREAD_Z = 10;
+const ENGAGE_RATE = 0.4;        // ramp 0→1 in ~2.5s
+const DISENGAGE_RATE = 0.25;    // decay 1→0 in ~4s
+const IDLE_TIMEOUT = 3.0;       // seconds of no movement before decay
+const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
+const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
 
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
@@ -79,7 +88,7 @@ function sampleTextPositions(
 }
 
 export default function ParticleCloud({
-  count = 3000,
+  count = 5500,
   layout = "text",
   compact = false,
 }: ParticleCloudProps) {
@@ -89,14 +98,23 @@ export default function ParticleCloud({
   const mouseDown = useRef(false);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const frameCount = useRef(0);
-  const startTime = useRef<number | null>(null);
   const compactRef = useRef(compact);
   compactRef.current = compact;
   const { camera } = useThree();
 
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-  }), []);
+  /* ── Interaction tracking ── */
+  const interactionStrength = useRef(0);
+  const hasEverInteracted = useRef(false);
+  const mouseOnPage = useRef(true);
+  const mouseMoved = useRef(false);
+  const lastInteractTime = useRef(0);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+    }),
+    [],
+  );
 
   // Pre-allocated vectors — reused every frame, zero GC pressure
   const _mouseVec = useMemo(() => new THREE.Vector3(), []);
@@ -114,18 +132,30 @@ export default function ParticleCloud({
   /* ── Particle data ── */
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3);
-    const targets = new Float32Array(count * 3);
+    const entropyPositions = new Float32Array(count * 3);
+    const textTargets = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const colorIndices = new Uint8Array(count);
     const randomOffsets = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 16;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 8;
-      targets[i * 3] = positions[i * 3]!;
-      targets[i * 3 + 1] = positions[i * 3 + 1]!;
-      targets[i * 3 + 2] = positions[i * 3 + 2]!;
+      const x = (Math.random() - 0.5) * ENTROPY_SPREAD_X;
+      const y = (Math.random() - 0.5) * ENTROPY_SPREAD_Y;
+      const z = (Math.random() - 0.5) * ENTROPY_SPREAD_Z;
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+
+      // Entropy = home position (where particles return when idle)
+      entropyPositions[i * 3] = x;
+      entropyPositions[i * 3 + 1] = y;
+      entropyPositions[i * 3 + 2] = z;
+
+      // Default text targets to entropy (overwritten when text is sampled)
+      textTargets[i * 3] = x;
+      textTargets[i * 3 + 1] = y;
+      textTargets[i * 3 + 2] = z;
 
       if (i < NODE_COUNT) {
         scales[i] = 0.5 + Math.random() * 0.2;
@@ -136,7 +166,14 @@ export default function ParticleCloud({
       colorIndices[i] = Math.floor(Math.random() * PARTICLE_COLORS.length);
       randomOffsets[i] = Math.random() * Math.PI * 2;
     }
-    return { positions, targets, scales, colorIndices, randomOffsets };
+    return {
+      positions,
+      entropyPositions,
+      textTargets,
+      scales,
+      colorIndices,
+      randomOffsets,
+    };
   }, [count]);
 
   /* ── Tensor network line geometry (pre-allocated) ── */
@@ -183,9 +220,15 @@ export default function ParticleCloud({
     }
   }, [count, particles.colorIndices]);
 
+  /* ── Event handlers ── */
   const handlePointerMove = useCallback((e: MouseEvent) => {
     mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    mouseMoved.current = true;
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    mouseMoved.current = true;
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -193,6 +236,7 @@ export default function ParticleCloud({
     if (!t) return;
     mouse.current.x = (t.clientX / window.innerWidth) * 2 - 1;
     mouse.current.y = -(t.clientY / window.innerHeight) * 2 + 1;
+    mouseMoved.current = true;
   }, []);
 
   const handleMouseDown = useCallback(() => {
@@ -203,24 +247,46 @@ export default function ParticleCloud({
     mouseDown.current = false;
   }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    mouseOnPage.current = true;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    mouseOnPage.current = false;
+  }, []);
+
   useEffect(() => {
+    const root = document.documentElement;
     window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
+    root.addEventListener("mouseenter", handleMouseEnter);
+    root.addEventListener("mouseleave", handleMouseLeave);
     return () => {
       window.removeEventListener("mousemove", handlePointerMove);
+      window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
+      root.removeEventListener("mouseenter", handleMouseEnter);
+      root.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [handlePointerMove, handleTouchMove, handleMouseDown, handleMouseUp]);
+  }, [
+    handlePointerMove,
+    handleTouchStart,
+    handleTouchMove,
+    handleMouseDown,
+    handleMouseUp,
+    handleMouseEnter,
+    handleMouseLeave,
+  ]);
 
-  /* ── Update targets when layout changes ── */
+  /* ── Compute text formation targets ── */
   useEffect(() => {
     if (textPositions.length === 0) return;
 
-    // Compact mode: legible text on mobile, dramatic on desktop
     const spreadX = compact ? 2.8 : 5.5;
     const spreadY = compact ? 1.2 : 2.4;
     const eventHorizon = compact ? 0.25 : 1.0;
@@ -243,34 +309,62 @@ export default function ParticleCloud({
 
         const flattenFactor = 0.45 + 0.45 * Math.min(r / 4, 1);
 
-        particles.targets[i * 3] = lensedR * Math.cos(lensedAngle);
-        particles.targets[i * 3 + 1] = lensedR * Math.sin(lensedAngle) * flattenFactor;
-        particles.targets[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
+        particles.textTargets[i * 3] = lensedR * Math.cos(lensedAngle);
+        particles.textTargets[i * 3 + 1] =
+          lensedR * Math.sin(lensedAngle) * flattenFactor;
+        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
       } else {
+        // Extra particles: ambient halo around text
         const angle = Math.random() * Math.PI * 2;
         const radius = eventHorizon + 0.3 + Math.random() * 3;
-        particles.targets[i * 3] = Math.cos(angle) * radius;
-        particles.targets[i * 3 + 1] = Math.sin(angle) * radius * 0.25;
-        particles.targets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+        particles.textTargets[i * 3] = Math.cos(angle) * radius;
+        particles.textTargets[i * 3 + 1] =
+          Math.sin(angle) * radius * 0.25;
+        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
       }
     }
-  }, [layout, count, compact, particles.targets, textPositions]);
+  }, [layout, count, compact, particles.textTargets, textPositions]);
 
   /* ── Per-frame animation ── */
   useFrame((state, delta) => {
     if (!meshRef.current) return;
     const time = state.clock.elapsedTime;
-    const dt = Math.min(delta * 60, 3); // frame-rate independent, capped to avoid jumps
+    const dt = Math.min(delta * 60, 3);
     frameCount.current++;
 
-    // Entrance animation — capture start time on first frame
-    if (startTime.current === null) {
-      startTime.current = time;
+    // ── Consume mouse activity flag ──
+    if (mouseMoved.current) {
+      mouseMoved.current = false;
+      hasEverInteracted.current = true;
+      lastInteractTime.current = time;
     }
-    const elapsed = time - startTime.current;
-    const lerpSpeed = elapsed < 3 ? LERP_SPEED * (2.5 - elapsed * 0.5) : LERP_SPEED;
 
-    // Update shader time uniform
+    // ── Compute interaction strength (smooth ramp) ──
+    const timeSinceInteract = time - lastInteractTime.current;
+    let targetStrength = 0;
+    if (
+      hasEverInteracted.current &&
+      mouseOnPage.current &&
+      timeSinceInteract < IDLE_TIMEOUT
+    ) {
+      targetStrength = 1;
+    }
+
+    if (interactionStrength.current < targetStrength) {
+      interactionStrength.current = Math.min(
+        targetStrength,
+        interactionStrength.current + ENGAGE_RATE * delta,
+      );
+    } else {
+      interactionStrength.current = Math.max(
+        targetStrength,
+        interactionStrength.current - DISENGAGE_RATE * delta,
+      );
+    }
+
+    const strength = interactionStrength.current;
+
+    // Update shader time
     if (shaderRef.current) {
       shaderRef.current.uniforms.uTime!.value = time;
     }
@@ -290,29 +384,60 @@ export default function ParticleCloud({
       let y = particles.positions[i * 3 + 1]!;
       let z = particles.positions[i * 3 + 2]!;
 
-      const tx = particles.targets[i * 3]!;
-      const ty = particles.targets[i * 3 + 1]!;
-      const tz = particles.targets[i * 3 + 2]!;
+      // ── Blend target: entropy ↔ text formation ──
+      const ex = particles.entropyPositions[i * 3]!;
+      const ey = particles.entropyPositions[i * 3 + 1]!;
+      const ez = particles.entropyPositions[i * 3 + 2]!;
+      const tx = particles.textTargets[i * 3]!;
+      const ty = particles.textTargets[i * 3 + 1]!;
+      const tz = particles.textTargets[i * 3 + 2]!;
 
-      // Lerp to target (frame-rate independent, faster during entrance)
-      x += (tx - x) * lerpSpeed * dt;
-      y += (ty - y) * lerpSpeed * dt;
-      z += (tz - z) * lerpSpeed * dt;
+      const effectiveX = ex + (tx - ex) * strength;
+      const effectiveY = ey + (ty - ey) * strength;
+      const effectiveZ = ez + (tz - ez) * strength;
 
-      // Orbital drift — cache sqrt for reuse in proximity boost
+      // Lerp toward effective target
+      x += (effectiveX - x) * LERP_SPEED * dt;
+      y += (effectiveY - y) * LERP_SPEED * dt;
+      z += (effectiveZ - z) * LERP_SPEED * dt;
+
+      // Orbital drift — reduced in entropy mode
       const rrSq = x * x + y * y;
       const rr = Math.sqrt(rrSq);
       if (rr > 0.3) {
         const orbSpeed = ORB_SPEED_FACTOR / (rr + 0.4);
         const orbAngle = Math.atan2(y, x);
-        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt;
-        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt;
+        const orbStr = 0.3 + 0.7 * strength;
+        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr;
+        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr;
       }
 
-      // Tiny jitter
+      // Jitter — amplified in entropy mode for alive feel
       const offset = particles.randomOffsets[i]!;
-      x += Math.sin(time * 0.8 + offset) * JITTER_AMP * dt;
-      y += Math.cos(time * 0.9 + offset) * JITTER_AMP * dt;
+      const jitterMult = 1 + (ENTROPY_JITTER_MULT - 1) * (1 - strength);
+      x += Math.sin(time * 0.8 + offset) * JITTER_AMP * jitterMult * dt;
+      y += Math.cos(time * 0.9 + offset) * JITTER_AMP * jitterMult * dt;
+
+      // Entropy drift — gentle brownian motion when not forming
+      const entropyFactor = 1 - strength;
+      if (entropyFactor > 0.01) {
+        x +=
+          Math.sin(time * 0.3 + offset * 2.1) *
+          ENTROPY_DRIFT *
+          entropyFactor *
+          dt;
+        y +=
+          Math.cos(time * 0.25 + offset * 1.7) *
+          ENTROPY_DRIFT *
+          entropyFactor *
+          dt;
+        z +=
+          Math.sin(time * 0.15 + offset * 3.3) *
+          ENTROPY_DRIFT *
+          0.5 *
+          entropyFactor *
+          dt;
+      }
 
       // Mouse interaction — repulsion by default, attraction on click
       const dx = x - mx;
@@ -321,11 +446,13 @@ export default function ParticleCloud({
       if (dSq < MOUSE_RADIUS_SQ) {
         const d = Math.sqrt(dSq);
         if (mouseDown.current) {
-          const force = ((MOUSE_RADIUS - d) / MOUSE_RADIUS) * MOUSE_FORCE * dt * 0.5;
+          const force =
+            ((MOUSE_RADIUS - d) / MOUSE_RADIUS) * MOUSE_FORCE * dt * 0.5;
           x -= dx * force;
           y -= dy * force;
         } else {
-          const force = ((MOUSE_RADIUS - d) / MOUSE_RADIUS) * MOUSE_FORCE * dt;
+          const force =
+            ((MOUSE_RADIUS - d) / MOUSE_RADIUS) * MOUSE_FORCE * dt;
           x += dx * force;
           y += dy * force;
         }
@@ -335,13 +462,18 @@ export default function ParticleCloud({
       particles.positions[i * 3 + 1] = y;
       particles.positions[i * 3 + 2] = z;
 
-      // Scale with proximity glow — bigger on mobile for legibility
+      // Scale with proximity glow
       const baseScale = particles.scales[i]!;
       const pulse = 0.9 + 0.1 * Math.sin(time * 1.5 + offset);
       const isNode = i < NODE_COUNT;
       const proximityBoost = 1.3 + 1.0 / (rr + 0.8);
       const mobileBoost = compactRef.current ? 1.8 : 1;
-      const scale = baseScale * pulse * (isNode ? 0.032 : 0.018) * proximityBoost * mobileBoost;
+      const scale =
+        baseScale *
+        pulse *
+        (isNode ? 0.032 : 0.018) *
+        proximityBoost *
+        mobileBoost;
 
       dummy.position.set(x, y, z);
       dummy.scale.setScalar(scale);
@@ -357,19 +489,21 @@ export default function ParticleCloud({
       const invCell = 1 / CONN_DIST;
       let lc = 0;
 
-      // Build spatial hash grid — O(n) insert, ~O(n) query vs O(n²) brute force
       const grid = new Map<number, number[]>();
       for (let i = 0; i < nodeCount; i++) {
         const cx = Math.floor(particles.positions[i * 3]! * invCell);
         const cy = Math.floor(particles.positions[i * 3 + 1]! * invCell);
         const cz = Math.floor(particles.positions[i * 3 + 2]! * invCell);
-        const key = (cx * 73856093) ^ (cy * 19349663) ^ (cz * 83492791);
+        const key =
+          (cx * 73856093) ^ (cy * 19349663) ^ (cz * 83492791);
         let cell = grid.get(key);
-        if (!cell) { cell = []; grid.set(key, cell); }
+        if (!cell) {
+          cell = [];
+          grid.set(key, cell);
+        }
         cell.push(i);
       }
 
-      // Query neighboring cells for each node
       for (let i = 0; i < nodeCount && lc < MAX_LINES; i++) {
         const ix = particles.positions[i * 3]!;
         const iy = particles.positions[i * 3 + 1]!;
@@ -382,7 +516,9 @@ export default function ParticleCloud({
           for (let dcy = -1; dcy <= 1; dcy++) {
             for (let dcz = -1; dcz <= 1; dcz++) {
               const cell = grid.get(
-                ((cx + dcx) * 73856093) ^ ((cy + dcy) * 19349663) ^ ((cz + dcz) * 83492791)
+                ((cx + dcx) * 73856093) ^
+                  ((cy + dcy) * 19349663) ^
+                  ((cz + dcz) * 83492791),
               );
               if (!cell) continue;
               for (let ci = 0; ci < cell.length && lc < MAX_LINES; ci++) {
@@ -407,7 +543,9 @@ export default function ParticleCloud({
         }
       }
 
-      const posAttr = lineMesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+      const posAttr = lineMesh.geometry.getAttribute(
+        "position",
+      ) as THREE.BufferAttribute;
       posAttr.needsUpdate = true;
       lineMesh.geometry.setDrawRange(0, lc * 2);
     }
