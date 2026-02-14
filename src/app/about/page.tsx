@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BreadcrumbNav from "@/components/ui/BreadcrumbNav";
 
 export const metadata: Metadata = {
   title: "About — Field Project",
@@ -11,6 +12,8 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen py-24 px-6">
       <div className="max-w-4xl mx-auto">
+        <BreadcrumbNav items={[{ label: "Home", href: "/" }, { label: "About" }]} />
+
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Component, type ReactNode } from "react";
+import { Component, type ReactNode, useState, useEffect, useCallback } from "react";
 
 const QuantumField = dynamic(
   () => import("@/components/canvas/QuantumField"),
@@ -17,10 +17,10 @@ interface ErrorBoundaryState {
 }
 
 class WebGLErrorBoundary extends Component<
-  { children: ReactNode },
+  { children: ReactNode; onError?: () => void },
   ErrorBoundaryState
 > {
-  constructor(props: { children: ReactNode }) {
+  constructor(props: { children: ReactNode; onError?: () => void }) {
     super(props);
     this.state = { hasError: false };
   }
@@ -29,39 +29,27 @@ class WebGLErrorBoundary extends Component<
     return { hasError: true };
   }
 
+  componentDidCatch() {
+    this.props.onError?.();
+  }
+
+  reset() {
+    this.setState({ hasError: false });
+  }
+
   render() {
     if (this.state.hasError) {
-      return <WebGLFallback />;
+      return null; // Render nothing — will remount on recovery
     }
     return this.props.children;
   }
-}
-
-function WebGLFallback() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]">
-      <div className="text-center max-w-md px-6">
-        <h2 className="text-2xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          FIELD PROJECT
-        </h2>
-        <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-4">
-          The 3D quantum field requires WebGL.
-        </p>
-        <p className="text-[var(--text-tertiary)] text-xs leading-relaxed">
-          Enable hardware acceleration: Chrome → Settings → System → &quot;Use
-          hardware acceleration when available&quot;, then restart Chrome.
-        </p>
-      </div>
-    </div>
-  );
 }
 
 function isWebGLAvailable(): boolean {
   if (typeof window === "undefined") return true;
   try {
     const canvas = document.createElement("canvas");
-    const gl =
-      canvas.getContext("webgl2") || canvas.getContext("webgl");
+    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
     return gl !== null;
   } catch {
     return false;
@@ -71,13 +59,39 @@ function isWebGLAvailable(): boolean {
 export default function QuantumFieldWrapper({
   scrollProgress,
 }: QuantumFieldWrapperProps) {
+  const [key, setKey] = useState(0);
+
+  // Auto-recover from WebGL context loss by remounting
+  const handleError = useCallback(() => {
+    setTimeout(() => setKey((k) => k + 1), 1000);
+  }, []);
+
+  // Listen for webglcontextlost on the canvas
+  useEffect(() => {
+    const handleContextLost = (e: Event) => {
+      e.preventDefault(); // Allow context restore
+    };
+    const handleContextRestored = () => {
+      setKey((k) => k + 1); // Force remount
+    };
+
+    document.addEventListener("webglcontextlost", handleContextLost, true);
+    document.addEventListener("webglcontextrestored", handleContextRestored, true);
+    return () => {
+      document.removeEventListener("webglcontextlost", handleContextLost, true);
+      document.removeEventListener("webglcontextrestored", handleContextRestored, true);
+    };
+  }, []);
+
   if (!isWebGLAvailable()) {
-    return <WebGLFallback />;
+    return null;
   }
 
   return (
-    <WebGLErrorBoundary>
-      <QuantumField scrollProgress={scrollProgress} />
-    </WebGLErrorBoundary>
+    <div aria-hidden="true" style={{ willChange: "transform" }}>
+      <WebGLErrorBoundary key={key} onError={handleError}>
+        <QuantumField scrollProgress={scrollProgress} />
+      </WebGLErrorBoundary>
+    </div>
   );
 }

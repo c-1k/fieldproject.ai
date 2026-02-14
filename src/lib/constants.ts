@@ -11,12 +11,12 @@ export const PARTICLE_COLORS = [
 ] as const;
 
 export const PIPELINE_POSITIONS: [number, number, number][] = [
-  [-4, 0, 0],   // boson
-  [-2, 0, 0],   // fermion
-  [0, 0, 0],    // higgs
-  [2, 0, 0],    // hadron
-  [4, 0, 0],    // photon
-  [6, 0, 0],    // neutrino
+  [-4.5, 0.3, -0.5],   // boson
+  [-2.5, -0.2, 0.3],   // fermion
+  [-0.5, 0.1, -0.2],   // higgs
+  [1.5, -0.3, 0.4],    // hadron
+  [3.5, 0.2, -0.3],    // photon
+  [5.5, -0.1, 0.2],    // neutrino
 ];
 
 export const SECTION_COUNT = 6;

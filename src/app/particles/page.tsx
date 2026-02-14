@@ -8,6 +8,7 @@ import {
   SUPPORTING_PARTICLE_LIST,
 } from "@/lib/particles";
 import ParticleCard from "@/components/ui/ParticleCard";
+import BreadcrumbNav from "@/components/ui/BreadcrumbNav";
 
 export const metadata: Metadata = {
   title: "Particles — Field Project",
@@ -21,6 +22,8 @@ export default function ParticlesPage() {
   return (
     <main className="min-h-screen py-24 px-6">
       <div className="max-w-5xl mx-auto">
+        <BreadcrumbNav items={[{ label: "Home", href: "/" }, { label: "Particles" }]} />
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">

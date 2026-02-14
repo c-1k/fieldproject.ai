@@ -53,8 +53,11 @@ export default function Home() {
 
   return (
     <main className="relative">
-      {/* Fixed 3D background */}
-      <div className="fixed inset-0 -z-10">
+      {/* Fixed 3D background — fades to subtle atmosphere past hero */}
+      <div
+        className="fixed inset-0 -z-10 transition-opacity duration-700"
+        style={{ opacity: activeSection === 0 ? 1 : 0.25 }}
+      >
         <QuantumFieldWrapper scrollProgress={progress} />
       </div>
 
