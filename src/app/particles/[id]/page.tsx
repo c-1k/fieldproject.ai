@@ -109,7 +109,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Outputs */}
         <section className="mb-12">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
+          <p className="text-xs sm:text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
             Outputs
           </p>
           <p className="text-[var(--text-secondary)] leading-relaxed">
@@ -119,7 +119,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Must Never */}
         <section className="mb-14 sm:mb-20">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
+          <p className="text-xs sm:text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
             Must Never
           </p>
           <p className="text-[var(--text-secondary)] leading-relaxed">
@@ -129,7 +129,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Connection diagram */}
         <section className="mb-16 sm:mb-24">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-6">
+          <p className="text-xs sm:text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-6">
             Pipeline Position
           </p>
 
@@ -145,7 +145,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
                   <span key={`in-${i}`} className="flex items-center gap-2">
                     <Link
                       href={`/particles/${conn.from}`}
-                      className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-1"
+                      className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-2 sm:py-1"
                     >
                       {PARTICLES[conn.from].name}
                     </Link>
@@ -183,7 +183,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
                     </span>
                     <Link
                       href={`/particles/${conn.to}`}
-                      className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-1"
+                      className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-2 sm:py-1"
                     >
                       {PARTICLES[conn.to].name}
                     </Link>
@@ -210,7 +210,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
               href={`/particles/${prev}`}
               className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-3 pr-4"
             >
-              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
+              <span className="text-xs sm:text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
                 Previous
               </span>
               {PARTICLES[prev].name}
@@ -223,7 +223,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
               href={`/particles/${next}`}
               className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors text-right py-3 pl-4"
             >
-              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
+              <span className="text-xs sm:text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
                 Next
               </span>
               {PARTICLES[next].name}

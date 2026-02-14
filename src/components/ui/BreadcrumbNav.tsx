@@ -18,7 +18,7 @@ export default function BreadcrumbNav({ items }: { items: BreadcrumbItem[] }) {
             {item.href ? (
               <Link
                 href={item.href}
-                className="hover:text-[var(--text-secondary)] transition-colors py-1 truncate"
+                className="hover:text-[var(--text-secondary)] transition-colors py-2 sm:py-1 truncate"
               >
                 {item.label}
               </Link>

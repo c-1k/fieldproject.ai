@@ -79,7 +79,7 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="sm:hidden border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-md px-6 py-4 space-y-1">
+        <div className="sm:hidden fixed top-14 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur-md px-6 py-4 space-y-1">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
             return (
