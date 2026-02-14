@@ -140,6 +140,19 @@ export default function ParticleCloud({
   const vortexStrength = useRef(0);
   const vortexTime = useRef(0);
 
+  // Random 3D spin axis — unique every visit, biased toward Z
+  // so particles don't flood the title text area
+  const spinAxis = useRef<{ x: number; y: number; z: number } | null>(null);
+  if (!spinAxis.current) {
+    const tilt = Math.random() * 0.6; // 0–34° from Z axis
+    const azimuth = Math.random() * Math.PI * 2;
+    spinAxis.current = {
+      x: Math.sin(tilt) * Math.cos(azimuth),
+      y: Math.sin(tilt) * Math.sin(azimuth),
+      z: Math.cos(tilt),
+    };
+  }
+
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
@@ -480,14 +493,14 @@ export default function ParticleCloud({
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
 
-      // ── 3-phase singularity vortex ──
-      // Phase 1: S-curve collapse to origin
-      // Phase 2: S-curve expand back to ring with rotation starting
-      // Phase 3: Steady Keplerian orbit
+      // ── 3-phase singularity vortex (3D Rodrigues' rotation) ──
       let rx = rx0, ry = ry0, rz = rz0;
       if (vortexStrength.current > 0.01) {
         const vt = vortexTime.current;
         const vs = vortexStrength.current;
+        const kx = spinAxis.current!.x;
+        const ky = spinAxis.current!.y;
+        const kz = spinAxis.current!.z;
 
         if (vt < SINGULARITY_COLLAPSE_T) {
           // Phase 1: Collapse to singularity
@@ -495,28 +508,43 @@ export default function ParticleCloud({
           rx = rx0 * (1 - collapseBlend);
           ry = ry0 * (1 - collapseBlend);
           rz = rz0 * (1 - collapseBlend);
-        } else if (vt < SINGULARITY_COLLAPSE_T + SINGULARITY_EXPAND_T) {
-          // Phase 2: Expand from singularity to rotating ring
-          const expandBlend = smoothstep((vt - SINGULARITY_COLLAPSE_T) / SINGULARITY_EXPAND_T) * vs;
-          const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
-          const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
-          const rotTime = vt - SINGULARITY_COLLAPSE_T;
-          const vAngle = keplerW * rotTime;
-          const cosV = Math.cos(vAngle);
-          const sinV = Math.sin(vAngle);
-          rx = (rx0 * cosV - ry0 * sinV) * expandBlend;
-          ry = (rx0 * sinV + ry0 * cosV) * expandBlend;
-          rz = rz0 * expandBlend;
         } else {
-          // Phase 3: Steady Keplerian rotation
-          const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
-          const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
+          // Rodrigues' rotation around random 3D axis
           const rotTime = vt - SINGULARITY_COLLAPSE_T;
+          // Perpendicular distance from spin axis → Keplerian radius
+          const dot0 = kx * rx0 + ky * ry0 + kz * rz0;
+          const rPerp = Math.sqrt(
+            rx0 * rx0 + ry0 * ry0 + rz0 * rz0 - dot0 * dot0,
+          );
+          const keplerW =
+            VORTEX_SPEED / Math.pow(Math.max(rPerp, 0.5), 1.5);
           const vAngle = keplerW * rotTime;
           const cosV = Math.cos(vAngle);
           const sinV = Math.sin(vAngle);
-          rx = rx0 * cosV - ry0 * sinV;
-          ry = rx0 * sinV + ry0 * cosV;
+          // Cross product: k × v
+          const cx = ky * rz0 - kz * ry0;
+          const cy = kz * rx0 - kx * rz0;
+          const cz = kx * ry0 - ky * rx0;
+          // Rodrigues: v*cos + (k×v)*sin + k*(k·v)*(1-cos)
+          const rrx = rx0 * cosV + cx * sinV + kx * dot0 * (1 - cosV);
+          const rry = ry0 * cosV + cy * sinV + ky * dot0 * (1 - cosV);
+          const rrz = rz0 * cosV + cz * sinV + kz * dot0 * (1 - cosV);
+
+          if (vt < SINGULARITY_COLLAPSE_T + SINGULARITY_EXPAND_T) {
+            // Phase 2: Expand from singularity to rotating ring
+            const expandBlend =
+              smoothstep(
+                (vt - SINGULARITY_COLLAPSE_T) / SINGULARITY_EXPAND_T,
+              ) * vs;
+            rx = rrx * expandBlend;
+            ry = rry * expandBlend;
+            rz = rrz * expandBlend;
+          } else {
+            // Phase 3: Steady 3D Keplerian orbit
+            rx = rrx;
+            ry = rry;
+            rz = rrz;
+          }
         }
       }
 
