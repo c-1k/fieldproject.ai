@@ -289,8 +289,8 @@ export default function ParticleCloud({
 
     const spreadX = compact ? 2.8 : 5.5;
     const spreadY = compact ? 1.2 : 2.4;
-    const eventHorizon = compact ? 0.35 : 1.5;
-    const lensStrength = compact ? 0.6 : 2.4;
+    const eventHorizon = compact ? 0.3 : 1.2;
+    const lensStrength = compact ? 0.5 : 2.0;
 
     for (let i = 0; i < count; i++) {
       if (i < textPositions.length) {
@@ -316,7 +316,7 @@ export default function ParticleCloud({
       } else {
         // Extra particles: halo around text formation
         const angle = Math.random() * Math.PI * 2;
-        const radius = eventHorizon + 0.5 + Math.random() * 4;
+        const radius = eventHorizon + 0.4 + Math.random() * 3.5;
         particles.textTargets[i * 3] = Math.cos(angle) * radius;
         particles.textTargets[i * 3 + 1] =
           Math.sin(angle) * radius * 0.35;
