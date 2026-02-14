@@ -93,7 +93,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
         </div>
 
         {/* Subtitle */}
-        <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-6">
+        <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-6">
           {particle.subtitle}
         </p>
 
@@ -109,7 +109,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Outputs */}
         <section className="mb-12">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20 mb-3">
+          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
             Outputs
           </p>
           <p className="text-[var(--text-secondary)] leading-relaxed">
@@ -119,7 +119,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Must Never */}
         <section className="mb-14 sm:mb-20">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20 mb-3">
+          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-3">
             Must Never
           </p>
           <p className="text-[var(--text-secondary)] leading-relaxed">
@@ -129,7 +129,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
 
         {/* Connection diagram */}
         <section className="mb-16 sm:mb-24">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20 mb-6">
+          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 mb-6">
             Pipeline Position
           </p>
 
@@ -149,20 +149,20 @@ export default async function ParticleDetailPage({ params }: PageProps) {
                     >
                       {PARTICLES[conn.from].name}
                     </Link>
-                    <span className="flex items-center gap-1 text-white/10">
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
-                      <span className="w-4 sm:w-6 h-px bg-white/10" />
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="flex items-center gap-1 text-white/25">
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
+                      <span className="w-4 sm:w-6 h-px bg-white/25" />
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
                     </span>
                   </span>
                 ))
               ) : (
                 <span className="flex items-center gap-2">
-                  <span className="text-white/10 text-xs">ingress</span>
-                  <span className="flex items-center gap-1 text-white/10">
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
-                    <span className="w-4 sm:w-6 h-px bg-white/10" />
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                  <span className="text-white/25 text-xs">ingress</span>
+                  <span className="flex items-center gap-1 text-white/25">
+                    <span className="w-1 h-1 rounded-full bg-white/30" />
+                    <span className="w-4 sm:w-6 h-px bg-white/25" />
+                    <span className="w-1 h-1 rounded-full bg-white/30" />
                   </span>
                 </span>
               )}
@@ -176,10 +176,10 @@ export default async function ParticleDetailPage({ params }: PageProps) {
               {outgoing.length > 0 ? (
                 outgoing.map((conn, i) => (
                   <span key={`out-${i}`} className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 text-white/10">
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
-                      <span className="w-4 sm:w-6 h-px bg-white/10" />
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="flex items-center gap-1 text-white/25">
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
+                      <span className="w-4 sm:w-6 h-px bg-white/25" />
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
                     </span>
                     <Link
                       href={`/particles/${conn.to}`}
@@ -191,12 +191,12 @@ export default async function ParticleDetailPage({ params }: PageProps) {
                 ))
               ) : (
                 <span className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-white/10">
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
-                    <span className="w-4 sm:w-6 h-px bg-white/10" />
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                  <span className="flex items-center gap-1 text-white/25">
+                    <span className="w-1 h-1 rounded-full bg-white/30" />
+                    <span className="w-4 sm:w-6 h-px bg-white/25" />
+                    <span className="w-1 h-1 rounded-full bg-white/30" />
                   </span>
-                  <span className="text-white/10 text-xs">terminal</span>
+                  <span className="text-white/25 text-xs">terminal</span>
                 </span>
               )}
             </div>
@@ -204,13 +204,13 @@ export default async function ParticleDetailPage({ params }: PageProps) {
         </section>
 
         {/* Prev / Next navigation */}
-        <nav className="flex items-center justify-between pt-8 sm:pt-12 border-t border-white/[0.04]">
+        <nav className="flex items-center justify-between pt-8 sm:pt-12 border-t border-white/[0.08]">
           {prev ? (
             <Link
               href={`/particles/${prev}`}
               className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors py-3 pr-4"
             >
-              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20 block mb-1">
+              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
                 Previous
               </span>
               {PARTICLES[prev].name}
@@ -223,7 +223,7 @@ export default async function ParticleDetailPage({ params }: PageProps) {
               href={`/particles/${next}`}
               className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors text-right py-3 pl-4"
             >
-              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/20 block mb-1">
+              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-white/35 block mb-1">
                 Next
               </span>
               {PARTICLES[next].name}

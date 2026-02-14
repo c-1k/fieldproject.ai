@@ -74,7 +74,7 @@ export default function ParticlesPage() {
           <div className="mb-12 sm:mb-20">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px flex-1 bg-gradient-to-r from-white/[0.06] to-transparent" />
-              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/25">
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/40">
                 I — The Canonical Pipeline
               </span>
               <div className="h-px flex-1 bg-gradient-to-l from-white/[0.06] to-transparent" />
@@ -83,7 +83,7 @@ export default function ParticlesPage() {
               Six particles in strict order. Every event traverses this path — no step may be skipped.
             </p>
             {/* Inline flow */}
-            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-mono text-white/15 mt-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-mono text-white/30 mt-4">
               {CORE_PARTICLES.map((id, i) => (
                 <span key={id} className="flex items-center gap-2">
                   <span>{PARTICLES[id].name}</span>
@@ -101,7 +101,7 @@ export default function ParticlesPage() {
                 <h3 className="text-2xl font-semibold font-display text-[var(--text-primary)]">{wide1.name}</h3>
                 <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: wide1.color }} />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-4">{wide1.subtitle}</p>
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-4">{wide1.subtitle}</p>
               <p className="text-sm text-[var(--text-tertiary)] italic mb-3 leading-relaxed">{wide1.physics}</p>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{wide1.role}</p>
             </div>
@@ -116,7 +116,7 @@ export default function ParticlesPage() {
                   <h3 className="text-xl font-semibold font-display text-[var(--text-primary)]">{p.name}</h3>
                   <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: p.color }} />
                 </div>
-                <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-4">{p.subtitle}</p>
+                <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-4">{p.subtitle}</p>
                 <p className="text-sm text-[var(--text-tertiary)] italic mb-3 leading-relaxed">{p.physics}</p>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{p.role}</p>
               </div>
@@ -130,7 +130,7 @@ export default function ParticlesPage() {
                 <h3 className="text-2xl font-semibold font-display text-[var(--text-primary)]">{wide2.name}</h3>
                 <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: wide2.color }} />
               </div>
-              <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-4">{wide2.subtitle}</p>
+              <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-4">{wide2.subtitle}</p>
               <p className="text-sm text-[var(--text-tertiary)] italic mb-3 leading-relaxed">{wide2.physics}</p>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{wide2.role}</p>
             </div>
@@ -148,7 +148,7 @@ export default function ParticlesPage() {
                   <h3 className="text-xl font-semibold font-display text-[var(--text-primary)]">{p.name}</h3>
                   <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: p.color }} />
                 </div>
-                <p className="text-xs font-mono tracking-wide uppercase text-white/15 mb-4">{p.subtitle}</p>
+                <p className="text-xs font-mono tracking-wide uppercase text-white/30 mb-4">{p.subtitle}</p>
                 <p className="text-sm text-[var(--text-tertiary)] italic mb-3 leading-relaxed">{p.physics}</p>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{p.role}</p>
               </div>
@@ -162,7 +162,7 @@ export default function ParticlesPage() {
           <div className="mb-12 sm:mb-20">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-px flex-1 bg-gradient-to-r from-white/[0.04] to-transparent" />
-              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/15">
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/40">
                 II — Field Operators
               </span>
               <div className="h-px flex-1 bg-gradient-to-l from-white/[0.04] to-transparent" />
@@ -186,7 +186,7 @@ export default function ParticlesPage() {
                   <h3 className="text-lg font-semibold font-display text-[var(--text-primary)]">{p.name}</h3>
                   <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: p.color }} />
                 </div>
-                <p className="text-[10px] font-mono tracking-wide uppercase text-white/15 mb-3">{p.subtitle}</p>
+                <p className="text-[10px] font-mono tracking-wide uppercase text-white/30 mb-3">{p.subtitle}</p>
                 <p className="text-xs text-[var(--text-tertiary)] italic mb-2 leading-relaxed">{p.physics}</p>
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{p.role}</p>
               </div>
