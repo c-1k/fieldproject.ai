@@ -1,51 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { CORE_PARTICLES, PARTICLES } from "@/lib/particles";
-import { SECTION_COUNT } from "@/lib/constants";
 import ScrollIndicator from "@/components/ui/ScrollIndicator";
 import ParticleBlueprint from "@/components/ui/ParticleBlueprint";
 
-const QuantumFieldWrapper = dynamic(
-  () => import("@/components/canvas/QuantumFieldWrapper"),
-  { ssr: false }
-);
-
-function useActiveSection() {
-  const [activeSection, setActiveSection] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const scrollTop = window.scrollY;
-      const p = Math.min(Math.max(scrollTop / scrollHeight, 0), 1);
-      const next = Math.min(Math.floor(p * SECTION_COUNT), SECTION_COUNT - 1);
-      setActiveSection((prev) => (prev !== next ? next : prev));
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  return activeSection;
-}
-
 export default function Home() {
-  const activeSection = useActiveSection();
-
   return (
     <main className="relative">
-      {/* Fixed 3D background — fades to subtle atmosphere past hero */}
-      <div
-        className="fixed inset-0 -z-10 transition-opacity duration-700"
-        style={{ opacity: activeSection === 0 ? 1 : 0.25 }}
-      >
-        <QuantumFieldWrapper />
-      </div>
 
       {/* ===== SECTION 1: HERO ===== */}
       <section className="relative min-h-screen flex items-center justify-center">

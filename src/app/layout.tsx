@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
 import JsonLd from "@/components/seo/JsonLd";
+import ParticleBackground from "@/components/canvas/ParticleBackground";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body>
         <JsonLd />
+        <ParticleBackground />
         <Navigation />
         {children}
         <Footer />
