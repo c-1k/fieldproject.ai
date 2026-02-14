@@ -51,13 +51,13 @@ const CLOUD_OUTER_MOBILE = 4.5;
 
 /* ── Vortex easter egg ── */
 const VORTEX_ZONE_RADIUS = 2.5;    // world-space units from center to trigger
-const VORTEX_SPEED = 0.9;           // inner ring 21-31s/rev, outer ~46s, cloud ~103s
+const VORTEX_SPEED = 0.225;         // ~84-124s/rev inner ring — quarter speed
 const VORTEX_ENGAGE = 0.12;         // slow onset (~8s to full strength)
 const VORTEX_DISENGAGE = 0.12;
 
 /* ── Singularity phases ── */
-const SINGULARITY_COLLAPSE_T = 0.6; // fast snap to singularity
-const SINGULARITY_EXPAND_T = 0.4;   // fast burst back to ring
+const SINGULARITY_COLLAPSE_T = 0.1; // instant snap to singularity
+const SINGULARITY_EXPAND_T = 0.2;   // near-instant burst back to ring
 
 /** Smooth S-curve: slow start → fast middle → slow end */
 function smoothstep(t: number): number {
