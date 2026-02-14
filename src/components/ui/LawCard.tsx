@@ -12,12 +12,12 @@ interface LawCardProps {
 export default function LawCard({ number, title, statement, delay = 0 }: LawCardProps) {
   return (
     <ScrollReveal delay={delay}>
-      <div className="flex gap-4 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--border-hover)] transition-colors">
-        <div className="w-8 h-8 rounded-full border border-[var(--accent)] flex items-center justify-center text-sm font-mono text-[var(--accent)] shrink-0">
+      <div className="flex gap-4 p-4 rounded-lg border-l-2 border-[var(--accent)] bg-transparent hover:bg-[var(--bg-surface)] transition-colors">
+        <div className="w-10 h-10 rounded-full border border-[var(--accent)] flex items-center justify-center text-base font-mono text-[var(--accent)] shrink-0">
           {number}
         </div>
         <div>
-          <h3 className="font-semibold mb-1">{title}</h3>
+          <h3 className="font-semibold font-display mb-1">{title}</h3>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
             {statement}
           </p>

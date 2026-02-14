@@ -5,18 +5,16 @@ import { motion } from "framer-motion";
 export default function ScrollIndicator() {
   return (
     <motion.div
-      className="absolute bottom-8 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      initial={{ opacity: 0 }}
+      className="flex flex-col items-center gap-2 mt-8"
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 1.5, duration: 0.8 }}
     >
       <span className="text-xs text-[var(--text-tertiary)] tracking-wider uppercase">
-        Scroll to explore
+        Scroll
       </span>
       <motion.svg
-        width="20"
-        height="20"
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

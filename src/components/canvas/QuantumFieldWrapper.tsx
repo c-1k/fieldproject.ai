@@ -88,7 +88,7 @@ export default function QuantumFieldWrapper({
   }
 
   return (
-    <div aria-hidden="true" style={{ willChange: "transform" }}>
+    <div aria-hidden="true" className="absolute inset-0">
       <WebGLErrorBoundary key={key} onError={handleError}>
         <QuantumField scrollProgress={scrollProgress} />
       </WebGLErrorBoundary>

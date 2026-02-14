@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { CORE_PARTICLES, PARTICLES, CANONICAL_FLOW } from "@/lib/particles";
+import { CORE_PARTICLES, PARTICLES } from "@/lib/particles";
 import { SECTIONS, SECTION_COUNT } from "@/lib/constants";
 import ScrollIndicator from "@/components/ui/ScrollIndicator";
+import ParticleBlueprint from "@/components/ui/ParticleBlueprint";
 
 const QuantumFieldWrapper = dynamic(
   () => import("@/components/canvas/QuantumFieldWrapper"),
@@ -62,24 +63,58 @@ export default function Home() {
       </div>
 
       {/* ===== SECTION 1: HERO ===== */}
-      <section className="relative min-h-screen flex items-end justify-center pb-40">
+      <section className="relative min-h-screen flex items-center justify-center">
+        {/* Title + subtitles — centered in the black hole */}
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 2.0 }}
+          >
+            <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter font-display mb-4">
+              Field Project
+            </h1>
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 2.5 }}
+            transition={{ duration: 1.0, delay: 2.8 }}
           >
             <p className="text-sm sm:text-base tracking-[0.2em] uppercase text-[var(--text-tertiary)] font-light">
               Architecture as counter-force to entropy
             </p>
           </motion.div>
-          <ScrollIndicator />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.0, delay: 3.4 }}
+          >
+            <p className="text-sm text-[var(--text-tertiary)] mt-4">
+              10 particles. 12 laws. One canonical path.
+            </p>
+          </motion.div>
         </div>
+
+        {/* Scroll indicator — pinned to bottom */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 4.0 }}
+        >
+          <ScrollIndicator />
+        </motion.div>
+
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg)] to-transparent" />
       </section>
 
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
       {/* ===== SECTION 2: THE PIPELINE ===== */}
-      <section className="min-h-screen flex items-center py-24 px-6">
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0 }}
@@ -87,7 +122,7 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-light text-center mb-3 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
               The Canonical Pipeline
             </h2>
             <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
@@ -95,56 +130,63 @@ export default function Home() {
               No step may absorb the responsibility of another.
             </p>
 
-            {/* Pipeline flow */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-16">
+            {/* Compact horizontal flow */}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mb-16 px-2 overflow-hidden">
+              {CORE_PARTICLES.map((id, i) => (
+                <div key={id} className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm font-mono text-white whitespace-nowrap">
+                    {PARTICLES[id].name}
+                  </span>
+                  {i < CORE_PARTICLES.length - 1 && (
+                    <span className="text-white/10 font-mono text-xs sm:text-sm">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Blueprint grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {CORE_PARTICLES.map((id, i) => {
                 const particle = PARTICLES[id];
                 return (
-                  <div key={id} className="flex items-center gap-3">
-                    <div className="text-center">
-                      <div className="px-4 py-2 rounded border border-[var(--border)] text-xs font-mono text-[var(--text-secondary)] hover:border-[var(--text-tertiary)] transition-colors">
+                  <motion.div
+                    key={id}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.08 }}
+                  >
+                    <ParticleBlueprint particleId={id} className="mb-3" />
+                    <div className="flex items-center gap-2 mb-1">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full opacity-25"
+                        style={{ backgroundColor: particle.color }}
+                      />
+                      <Link
+                        href={`/particles/${id}`}
+                        className="text-base sm:text-lg font-semibold font-display text-white hover:text-white/80 transition-colors py-1 inline-flex items-center min-h-[44px]"
+                      >
                         {particle.name}
-                      </div>
-                      <div className="text-[10px] text-[var(--text-tertiary)] mt-1.5 tracking-wide">
-                        {particle.subtitle}
-                      </div>
+                      </Link>
                     </div>
-                    {i < CORE_PARTICLES.length - 1 && (
-                      <span className="text-[var(--text-tertiary)] font-mono text-sm opacity-40">
-                        →
-                      </span>
-                    )}
-                  </div>
+                    <p className="text-[10px] font-mono uppercase text-white/15 tracking-wider">
+                      {particle.subtitle}
+                    </p>
+                  </motion.div>
                 );
               })}
-            </div>
-
-            {/* Flow details */}
-            <div className="max-w-xl mx-auto space-y-1">
-              {CANONICAL_FLOW.map((step) => (
-                <div
-                  key={`${step.from}-${step.to}`}
-                  className="flex items-center gap-3 px-4 py-2 rounded text-xs backdrop-blur-sm bg-white/[0.02] border border-white/[0.03]"
-                >
-                  <span className="font-mono shrink-0 w-16 text-right text-[var(--text-secondary)]">
-                    {PARTICLES[step.from].name}
-                  </span>
-                  <span className="text-[var(--text-tertiary)] opacity-40">→</span>
-                  <span className="font-mono shrink-0 w-16 text-[var(--text-secondary)]">
-                    {PARTICLES[step.to].name}
-                  </span>
-                  <span className="text-[var(--text-tertiary)]">
-                    {step.label}
-                  </span>
-                </div>
-              ))}
             </div>
           </motion.div>
         </div>
       </section>
 
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
       {/* ===== SECTION 3: EVENT TRAVERSAL ===== */}
-      <section className="min-h-screen flex items-center py-24 px-6">
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-2xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0 }}
@@ -152,79 +194,91 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-light text-center mb-3 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
               An Event Traverses the Field
             </h2>
             <p className="text-center text-[var(--text-tertiary)] mb-16 text-sm">
               Each particle activates in sequence.
             </p>
 
-            <div className="space-y-0">
-              {[
-                {
-                  step: "1",
-                  particle: "boson" as const,
-                  text: "External system sends a webhook. Boson validates identity, assigns CorrelationId, wraps into EventEnvelope, signs with HMAC. Returns 202.",
-                },
-                {
-                  step: "2",
-                  particle: "fermion" as const,
-                  text: "Fermion verifies HMAC, invokes Quark to parse the typed domain event, then consults Higgs for policy.",
-                },
-                {
-                  step: "3",
-                  particle: "higgs" as const,
-                  text: "\u201CTenant X wants to execute Action Y \u2014 allowed?\u201D Higgs evaluates and returns PolicyDecision with effective config and redaction rules.",
-                },
-                {
-                  step: "4",
-                  particle: "hadron" as const,
-                  text: "Fermion builds the ActionPlan, records step state in Hadron for durability, emits decision record to Neutrino.",
-                },
-                {
-                  step: "5",
-                  particle: "photon" as const,
-                  text: "For each Action in the plan: Photon resolves credentials, executes the typed connector, classifies the result.",
-                },
-                {
-                  step: "6",
-                  particle: "neutrino" as const,
-                  text: "Every decision, action, and outcome is recorded in Neutrino\u2019s append-only audit ledger. Full trace available.",
-                },
-              ].map((item) => (
-                <motion.div
-                  key={item.step}
-                  className="flex gap-4 pb-6 relative"
-                  initial={{ opacity: 0.3 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, margin: "-20%" }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-7 h-7 rounded-full border border-[var(--border)] flex items-center justify-center text-[10px] font-mono shrink-0 text-[var(--text-tertiary)]">
+            <div className="relative ml-4">
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-white/[0.06]" />
+
+              <div className="space-y-8">
+                {[
+                  {
+                    step: "01",
+                    particle: "boson" as const,
+                    text: "External system sends a webhook. Boson validates identity, assigns CorrelationId, wraps into EventEnvelope, signs with HMAC. Returns 202.",
+                  },
+                  {
+                    step: "02",
+                    particle: "fermion" as const,
+                    text: "Fermion verifies HMAC, invokes Quark to parse the typed domain event, then consults Higgs for policy.",
+                  },
+                  {
+                    step: "03",
+                    particle: "higgs" as const,
+                    text: "\u201CTenant X wants to execute Action Y \u2014 allowed?\u201D Higgs evaluates and returns PolicyDecision with effective config and redaction rules.",
+                  },
+                  {
+                    step: "04",
+                    particle: "hadron" as const,
+                    text: "Fermion builds the ActionPlan, records step state in Hadron for durability, emits decision record to Neutrino.",
+                  },
+                  {
+                    step: "05",
+                    particle: "photon" as const,
+                    text: "For each Action in the plan: Photon resolves credentials, executes the typed connector, classifies the result.",
+                  },
+                  {
+                    step: "06",
+                    particle: "neutrino" as const,
+                    text: "Every decision, action, and outcome is recorded in Neutrino\u2019s append-only audit ledger. Full trace available.",
+                  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={item.step}
+                    className="relative pl-8"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20%" }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                  >
+                    {/* Timeline dot */}
+                    <div
+                      className="absolute left-0 top-1.5 w-2 h-2 rounded-full -translate-x-[3.5px]"
+                      style={{
+                        backgroundColor: PARTICLES[item.particle].color,
+                        opacity: 0.25,
+                      }}
+                    />
+
+                    <span className="text-[10px] font-mono text-white/20">
                       {item.step}
-                    </div>
-                    {item.step !== "6" && (
-                      <div className="w-px flex-1 bg-white/[0.04] mt-1" />
-                    )}
-                  </div>
-                  <div className="pt-0.5">
-                    <span className="text-xs font-mono text-[var(--text-secondary)] tracking-wide">
-                      {PARTICLES[item.particle].name}
                     </span>
-                    <p className="text-xs text-[var(--text-tertiary)] leading-relaxed mt-1">
+                    <h3 className="font-display font-semibold text-white mt-0.5">
+                      {PARTICLES[item.particle].name}
+                    </h3>
+                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-1">
                       {item.text}
                     </p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
       {/* ===== SECTION 4: THE METAPHOR ===== */}
-      <section className="min-h-screen flex items-center py-24 px-6">
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0 }}
@@ -232,7 +286,7 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-light text-center mb-3 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
               The Names Are Not Decorative
             </h2>
             <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
@@ -262,21 +316,21 @@ export default function Home() {
                   q: "Where does tenant config live?",
                   a: "The Higgs field gives particles their properties. Tenant config lives in Higgs.",
                 },
-              ].map((item) => (
+              ].map((item, i) => (
                 <motion.div
                   key={item.q}
-                  className="flex gap-3 px-4 py-3 rounded backdrop-blur-sm bg-white/[0.02] border border-white/[0.03]"
-                  initial={{ opacity: 0, x: -8 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  className={`flex gap-3 px-3 sm:px-4 py-3 rounded backdrop-blur-sm bg-white/[0.02] border border-white/[0.03] max-w-xl ${i % 2 === 0 ? "sm:ml-0 sm:mr-auto" : "sm:ml-auto sm:mr-0"}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4 }}
                 >
                   <div>
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-sm text-[var(--text-secondary)]">
                       {item.q}
                     </span>
                     <br />
-                    <span className="text-xs text-[var(--text-tertiary)]">
+                    <span className="text-sm text-[var(--text-tertiary)]">
                       {item.a}
                     </span>
                   </div>
@@ -287,16 +341,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
       {/* ===== SECTION 5: ENTROPY ===== */}
-      <section className="min-h-screen flex items-center py-24 px-6">
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto w-full">
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-light text-center mb-3 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
               Entropy Is the Default
             </h2>
             <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
@@ -305,22 +364,22 @@ export default function Home() {
               disorder.
             </p>
 
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
               <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
-                <h3 className="text-xs font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
+                <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
                   AI Governance
                 </h3>
-                <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
                   Route AI requests through a governed pipeline. Policy is
                   evaluated before execution. Every decision, action, and outcome
                   is auditable.
                 </p>
               </div>
               <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
-                <h3 className="text-xs font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
+                <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
                   Event-Driven Platform
                 </h3>
-                <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
                   Build internal automation &mdash; CI/CD orchestration, incident
                   response, approval workflows &mdash; on a governed event backbone.
                 </p>
@@ -330,8 +389,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
       {/* ===== SECTION 6: EXPLORE ===== */}
-      <section className="min-h-screen flex items-center py-24 px-6">
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-2xl mx-auto w-full text-center">
           <motion.div
             initial={{ opacity: 0 }}
@@ -339,7 +403,7 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-2xl sm:text-3xl font-light mb-4 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4 tracking-tight">
               Explore the Field
             </h2>
             <p className="text-[var(--text-tertiary)] text-sm mb-16 max-w-md mx-auto">
@@ -348,42 +412,63 @@ export default function Home() {
             </p>
 
             <div className="grid sm:grid-cols-3 gap-3">
-              <Link
-                href="/particles"
-                className="group p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0 }}
               >
-                <div className="text-lg font-light mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
-                  10
-                </div>
-                <div className="text-xs font-mono text-[var(--text-secondary)] mb-1">Particles</div>
-                <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed">
-                  Every service, its physics analog, and what it must never do
-                </div>
-              </Link>
-              <Link
-                href="/laws"
-                className="group p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left"
+                <Link
+                  href="/particles"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-blue-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    10
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Particles</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    Every service, its physics analog, and what it must never do
+                  </div>
+                </Link>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <div className="text-lg font-light mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
-                  12
-                </div>
-                <div className="text-xs font-mono text-[var(--text-secondary)] mb-1">Laws</div>
-                <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed">
-                  Non-negotiable invariants that govern the field
-                </div>
-              </Link>
-              <Link
-                href="/about"
-                className="group p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left"
+                <Link
+                  href="/laws"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-purple-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    12
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Laws</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    Non-negotiable invariants that govern the field
+                  </div>
+                </Link>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <div className="text-lg font-light mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
-                  &infin;
-                </div>
-                <div className="text-xs font-mono text-[var(--text-secondary)] mb-1">Entropy</div>
-                <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed">
-                  The philosophy, the metaphor, and the two endgames
-                </div>
-              </Link>
+                <Link
+                  href="/about"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-cyan-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    &infin;
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Entropy</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    The philosophy, the metaphor, and the two endgames
+                  </div>
+                </Link>
+              </motion.div>
             </div>
           </motion.div>
         </div>

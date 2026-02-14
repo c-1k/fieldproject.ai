@@ -10,25 +10,25 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen py-24 px-6">
+    <main className="min-h-screen py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <BreadcrumbNav items={[{ label: "Home", href: "/" }, { label: "About" }]} />
 
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+        <div className="text-center mb-10 sm:mb-16">
+          <h1 className="text-3xl sm:text-5xl font-bold font-display tracking-tight mb-4">
             About the Field
           </h1>
-          <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
             The philosophy, the metaphor, and the counter-force to
             architectural disorder.
           </p>
         </div>
 
         {/* Elevator Definition */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">What Is Field Project?</h2>
-          <div className="p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
+        <section className="mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-4">What Is Field Project?</h2>
+          <div className="p-6 rounded-r-lg border-l-4 border-[var(--accent)] bg-[var(--bg-elevated)]">
             <p className="text-[var(--text-secondary)] leading-relaxed">
               Field Project is an architecture for event-driven systems where
               every event passes through a governed pipeline of ingress,
@@ -44,9 +44,10 @@ export default function AboutPage() {
         </section>
 
         {/* The Problem */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">The Problem</h2>
+        <section className="mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-4">The Problem</h2>
           <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
+            <span className="text-4xl sm:text-6xl font-display text-[var(--text-tertiary)] opacity-30 leading-none select-none">&ldquo;</span>
             <p>
               Distributed systems trend toward disorder. Services absorb
               responsibilities that belong elsewhere. Policy evaluation drifts
@@ -68,8 +69,8 @@ export default function AboutPage() {
         </section>
 
         {/* The Physics Metaphor */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">
+        <section className="mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-4">
             The Physics Metaphor
           </h2>
           <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed mb-8">
@@ -113,7 +114,7 @@ export default function AboutPage() {
               ].map((item) => (
                 <div
                   key={item.q}
-                  className="flex gap-3 px-4 py-3 rounded-md bg-[var(--bg)]"
+                  className="flex gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-md bg-[var(--bg)]"
                 >
                   <span className="text-[var(--accent)] font-medium shrink-0">
                     Q:
@@ -134,15 +135,15 @@ export default function AboutPage() {
         </section>
 
         {/* Two Endgames */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">Two Endgames</h2>
+        <section className="mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-4">Two Endgames</h2>
           <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
             The Field is not a product — it is an architecture that can be
             applied to two convergent problem spaces.
           </p>
 
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
+            <div className="p-6 rounded-xl border border-[var(--border)] border-l-4 border-l-[var(--accent)] bg-[var(--bg-elevated)]">
               <h3 className="font-semibold mb-3 text-[var(--accent)]">
                 AI Governance
               </h3>
@@ -156,7 +157,7 @@ export default function AboutPage() {
                 and ensuring a complete record of what they did.
               </p>
             </div>
-            <div className="p-6 rounded-xl border border-[var(--accent-purple)]/20 bg-[var(--accent-purple)]/5">
+            <div className="p-6 rounded-xl border border-[var(--border)] border-l-4 border-l-[var(--accent-purple)] bg-[var(--bg-elevated)]">
               <h3 className="font-semibold mb-3 text-[var(--accent-purple)]">
                 Event-Driven Platform
               </h3>
@@ -173,8 +174,8 @@ export default function AboutPage() {
         </section>
 
         {/* Entropy and the Field */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">
+        <section className="mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-4">
             Entropy and the Field
           </h2>
           <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
@@ -200,23 +201,23 @@ export default function AboutPage() {
 
         {/* Explore links */}
         <section className="text-center pt-8 border-t border-[var(--border)]">
-          <h2 className="text-2xl font-bold mb-6">Go Deeper</h2>
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold font-display mb-6">Go Deeper</h2>
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4">
             <Link
               href="/particles"
-              className="px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent)]/50 transition-all font-medium"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent)]/50 transition-all font-display font-semibold text-sm sm:text-base"
             >
               The 10 Particles
             </Link>
             <Link
               href="/laws"
-              className="px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent-purple)]/50 transition-all font-medium"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent-purple)]/50 transition-all font-display font-semibold text-sm sm:text-base"
             >
               The 12 Laws
             </Link>
             <Link
               href="/"
-              className="px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent-cyan)]/50 transition-all font-medium"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--accent-cyan)]/50 transition-all font-display font-semibold text-sm sm:text-base"
             >
               Back to the Field
             </Link>

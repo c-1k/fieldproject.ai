@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/particles", label: "Particles" },
+  { href: "/architecture", label: "Architecture" },
   { href: "/laws", label: "Laws" },
   { href: "/about", label: "About" },
 ];
@@ -31,7 +32,7 @@ export default function Navigation() {
       <nav className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="font-semibold text-[var(--text-primary)] tracking-tight"
+          className="font-semibold font-display text-base text-[var(--text-primary)] tracking-tight"
         >
           Field Project
         </Link>
@@ -58,7 +59,7 @@ export default function Navigation() {
 
         {/* Mobile hamburger */}
         <button
-          className="sm:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
+          className="sm:hidden flex flex-col justify-center items-center w-11 h-11 -mr-1.5 gap-1.5"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
           aria-expanded={open}
