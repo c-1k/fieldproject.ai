@@ -19,7 +19,7 @@ interface QuantumFieldProps {
   scrollProgress: number;
 }
 
-function Scene({ count, compact }: { count: number; compact: boolean }) {
+function Scene({ count, compact, scrollProgress }: { count: number; compact: boolean; scrollProgress: number }) {
   return (
     <>
       <ambientLight intensity={0.15} color="#8ba4c4" />
@@ -31,14 +31,13 @@ function Scene({ count, compact }: { count: number; compact: boolean }) {
       <pointLight position={[0, 0, 2]} intensity={2.5} distance={6} color="#c8d8ec" />
       <pointLight position={[0, 0, 0]} intensity={1.2} distance={3} color="#e0e8f4" />
 
-      <ParticleCloud count={count} layout="text" compact={compact} />
+      <ParticleCloud count={count} layout="text" compact={compact} scrollProgress={scrollProgress} />
       <AdaptiveDpr pixelated />
     </>
   );
 }
 
 export default function QuantumField({ scrollProgress }: QuantumFieldProps) {
-  void scrollProgress;
 
   const isMobile = useIsMobile();
   const reducedMotion = usePrefersReducedMotion();
@@ -80,7 +79,7 @@ export default function QuantumField({ scrollProgress }: QuantumFieldProps) {
         dpr={dpr}
         gl={{ antialias: !isMobile, alpha: true, powerPreference: "default" }}
       >
-        <Scene count={particleCount} compact={isMobile} />
+        <Scene count={particleCount} compact={isMobile} scrollProgress={scrollProgress} />
         {postProcessing}
       </Canvas>
     </div>

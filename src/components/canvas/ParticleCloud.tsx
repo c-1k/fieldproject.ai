@@ -12,6 +12,7 @@ interface ParticleCloudProps {
   count?: number;
   layout?: LayoutMode;
   compact?: boolean;
+  scrollProgress?: number;
 }
 
 /* ── Tensor network parameters ── */
@@ -35,8 +36,8 @@ const ENTROPY_SPREAD_X = 24;
 const ENTROPY_SPREAD_Y = 16;
 const ENTROPY_SPREAD_Z = 10;
 const ENGAGE_RATE = 0.4;        // ramp 0→1 in ~2.5s
-const DISENGAGE_RATE = 0.25;    // decay 1→0 in ~4s
-const IDLE_TIMEOUT = 3.0;       // seconds of no movement before decay
+const DISENGAGE_RATE = 0.12;    // decay 1→0 in ~8s (slow dissolve)
+const IDLE_TIMEOUT = 8.0;       // seconds of no movement before decay begins
 const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
 const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
 
@@ -87,10 +88,15 @@ function sampleTextPositions(
   return sampled;
 }
 
+/* ── Scroll-driven formation ── */
+const SCROLL_FORMATION_START = 0.02; // formation begins after 2% scroll
+const SCROLL_FORMATION_END = 0.15;   // fully formed by 15% scroll (~leaving hero)
+
 export default function ParticleCloud({
   count = 5500,
   layout = "text",
   compact = false,
+  scrollProgress = 0,
 }: ParticleCloudProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
@@ -100,6 +106,8 @@ export default function ParticleCloud({
   const frameCount = useRef(0);
   const compactRef = useRef(compact);
   compactRef.current = compact;
+  const scrollRef = useRef(scrollProgress);
+  scrollRef.current = scrollProgress;
   const { camera } = useThree();
 
   /* ── Interaction tracking ── */
@@ -339,30 +347,38 @@ export default function ParticleCloud({
       lastInteractTime.current = time;
     }
 
-    // ── Compute interaction strength (smooth ramp) ──
+    // ── Scroll-driven formation strength ──
+    const scrollRange = SCROLL_FORMATION_END - SCROLL_FORMATION_START;
+    const scrollStrength = Math.min(
+      Math.max((scrollRef.current - SCROLL_FORMATION_START) / scrollRange, 0),
+      1,
+    );
+
+    // ── Cursor-driven formation strength (secondary) ──
     const timeSinceInteract = time - lastInteractTime.current;
-    let targetStrength = 0;
+    let cursorTarget = 0;
     if (
       hasEverInteracted.current &&
       mouseOnPage.current &&
       timeSinceInteract < IDLE_TIMEOUT
     ) {
-      targetStrength = 1;
+      cursorTarget = 1;
     }
 
-    if (interactionStrength.current < targetStrength) {
+    if (interactionStrength.current < cursorTarget) {
       interactionStrength.current = Math.min(
-        targetStrength,
+        cursorTarget,
         interactionStrength.current + ENGAGE_RATE * delta,
       );
     } else {
       interactionStrength.current = Math.max(
-        targetStrength,
+        cursorTarget,
         interactionStrength.current - DISENGAGE_RATE * delta,
       );
     }
 
-    const strength = interactionStrength.current;
+    // Combined: whichever is higher — scroll or cursor
+    const strength = Math.max(scrollStrength, interactionStrength.current);
 
     // Update shader time
     if (shaderRef.current) {
