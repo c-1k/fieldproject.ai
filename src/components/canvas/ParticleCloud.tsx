@@ -39,18 +39,21 @@ const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
 const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
 const BIRTH_DURATION = 2.5;     // seconds over which particles randomly appear
 
-/* ── Accretion disk ── */
-const RING_FLATNESS = 0.72;      // 1.0 = perfect circle, lower = elliptical
-const TAIL_FRACTION = 0.35;      // fraction of particles dedicated to tails
-const TAIL_CONE = 0.45;          // angular spread of tail cone (radians)
-const TAIL_MAX_RADIUS = 7.5;     // max reach of tail particles
-const TAIL_VERTICAL_FLAT = 0.12; // how thin tails are vertically
+/* ── Ring + cloud shape ── */
+const RING_FLATNESS = 0.78;       // near-circular (1.0 = perfect circle)
+const VOID_RADIUS_DESKTOP = 2.5;  // center void size
+const VOID_RADIUS_MOBILE = 1.5;
+const RING_PEAK_DESKTOP = 3.3;    // where the dense ring sits
+const RING_PEAK_MOBILE = 2.2;
+const RING_BAND_WIDTH = 1.2;      // ring thickness
+const CLOUD_OUTER_DESKTOP = 7.0;  // how far the cloud extends
+const CLOUD_OUTER_MOBILE = 4.5;
 
 /* ── Vortex easter egg ── */
-const VORTEX_ZONE_RADIUS = 2.5;  // world-space units from center to trigger
-const VORTEX_SPEED = 0.1;        // base rotation speed — slow, deliberate
-const VORTEX_ENGAGE = 0.25;      // ramp-up rate
-const VORTEX_DISENGAGE = 0.12;   // ramp-down rate
+const VORTEX_ZONE_RADIUS = 2.5;   // world-space units from center to trigger
+const VORTEX_SPEED = 0.15;        // base angular velocity (rad/s at r=1)
+const VORTEX_ENGAGE = 0.25;
+const VORTEX_DISENGAGE = 0.12;
 
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
@@ -305,41 +308,32 @@ export default function ParticleCloud({
     handleMouseLeave,
   ]);
 
-  /* ── Compute ring formation targets (accretion disk with particle tails) ── */
+  /* ── Compute ring formation targets (dense ring + cloud beyond) ── */
   useEffect(() => {
-    const innerR = compact ? 1.0 : 1.8;
-    const outerR = compact ? 2.8 : 3.8;
+    const voidR = compact ? VOID_RADIUS_MOBILE : VOID_RADIUS_DESKTOP;
+    const ringPeak = compact ? RING_PEAK_MOBILE : RING_PEAK_DESKTOP;
+    const cloudOuter = compact ? CLOUD_OUTER_MOBILE : CLOUD_OUTER_DESKTOP;
 
     for (let i = 0; i < count; i++) {
-      const isTailParticle = Math.random() < TAIL_FRACTION;
+      const angle = Math.random() * Math.PI * 2;
 
-      if (isTailParticle) {
-        // ── Tail particle: dense stream extending from 3/9 o'clock ──
-        const side = Math.random() < 0.5 ? 0 : Math.PI;
-        const angle = side + (Math.random() - 0.5) * TAIL_CONE;
-        // Radius from inner ring edge out to tail max, biased inward
-        const t = Math.pow(Math.random(), 0.8);
-        const radius = innerR + t * (TAIL_MAX_RADIUS - innerR);
-        const flatness = TAIL_VERTICAL_FLAT + Math.random() * 0.08;
-
-        particles.ringTargets[i * 3] = Math.cos(angle) * radius;
-        particles.ringTargets[i * 3 + 1] =
-          Math.sin(angle) * radius * flatness;
-        particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+      let radius;
+      if (Math.random() < 0.55) {
+        // Dense ring band — concentrated around ringPeak
+        radius = ringPeak + (Math.random() - 0.5) * RING_BAND_WIDTH;
+        radius = Math.max(voidR, radius);
       } else {
-        // ── Ring particle: circular accretion ring ──
-        const angle = Math.random() * Math.PI * 2;
-        const t = Math.pow(Math.random(), 2.0);
-        const radius = Math.sqrt(
-          innerR * innerR + t * (outerR * outerR - innerR * innerR),
-        );
-        const flatness = RING_FLATNESS + 0.08 * Math.random();
-
-        particles.ringTargets[i * 3] = Math.cos(angle) * radius;
-        particles.ringTargets[i * 3 + 1] =
-          Math.sin(angle) * radius * flatness;
-        particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+        // Cloud beyond ring — density decreasing outward
+        const t = Math.pow(Math.random(), 1.5);
+        radius = ringPeak + RING_BAND_WIDTH * 0.5 + t * (cloudOuter - ringPeak - RING_BAND_WIDTH * 0.5);
       }
+
+      const flatness = RING_FLATNESS + Math.random() * 0.06;
+
+      particles.ringTargets[i * 3] = Math.cos(angle) * radius;
+      particles.ringTargets[i * 3 + 1] =
+        Math.sin(angle) * radius * flatness;
+      particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
     }
   }, [count, compact, particles.ringTargets]);
 
@@ -463,21 +457,12 @@ export default function ParticleCloud({
       const ex = particles.entropyPositions[i * 3]!;
       const ey = particles.entropyPositions[i * 3 + 1]!;
       const ez = particles.entropyPositions[i * 3 + 2]!;
-      const rx0 = particles.ringTargets[i * 3]!;
-      const ry0 = particles.ringTargets[i * 3 + 1]!;
+      const rx = particles.ringTargets[i * 3]!;
+      const ry = particles.ringTargets[i * 3 + 1]!;
       const rz = particles.ringTargets[i * 3 + 2]!;
       const tx = particles.textTargets[i * 3]!;
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
-
-      // Keplerian vortex: ω ∝ r^(-3/2) — inner particles orbit faster
-      const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
-      const keplerOmega = 1 / Math.pow(Math.max(rDist, 0.5), 1.5);
-      const particleAngle = vortexStrength.current * VORTEX_SPEED * time * keplerOmega;
-      const cosV = Math.cos(particleAngle);
-      const sinV = Math.sin(particleAngle);
-      const rx = rx0 * cosV - ry0 * sinV;
-      const ry = rx0 * sinV + ry0 * cosV;
 
       // Formation target: ring when no scroll, text when scrolled
       const ftx = rx + (tx - rx) * scrollStrength;
@@ -494,17 +479,28 @@ export default function ParticleCloud({
       y += (effectiveY - y) * LERP_SPEED * dt;
       z += (effectiveZ - z) * LERP_SPEED * dt;
 
-      // Orbital drift — amplified during vortex
+      // Orbital drift (gentle ambient rotation)
       const rrSq = x * x + y * y;
       const rr = Math.sqrt(rrSq);
       if (rr > 0.3) {
         const orbSpeed = ORB_SPEED_FACTOR / (rr + 0.4);
         const orbAngle = Math.atan2(y, x);
         const orbStr = 0.3 + 0.7 * strength;
-        // Mild vortex boost — Keplerian target rotation handles the rest
-        const vortexBoost = 1 + vortexStrength.current * 3;
-        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr * vortexBoost;
-        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr * vortexBoost;
+        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr;
+        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr;
+      }
+
+      // ── Vortex: direct Keplerian orbital motion ──
+      // ω ∝ r^(-3/2) — inner particles orbit faster than outer
+      if (vortexStrength.current > 0.01 && rr > 0.5) {
+        const omega = VORTEX_SPEED / Math.pow(rr, 1.5);
+        const dTheta = omega * vortexStrength.current * delta;
+        const cosD = Math.cos(dTheta);
+        const sinD = Math.sin(dTheta);
+        const nx = x * cosD - y * sinD;
+        const ny = x * sinD + y * cosD;
+        x = nx;
+        y = ny;
       }
 
       // Jitter — amplified in entropy mode for alive feel
