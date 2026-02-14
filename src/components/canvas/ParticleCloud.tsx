@@ -50,10 +50,20 @@ const CLOUD_OUTER_DESKTOP = 7.0;  // how far the cloud extends
 const CLOUD_OUTER_MOBILE = 4.5;
 
 /* ── Vortex easter egg ── */
-const VORTEX_ZONE_RADIUS = 2.5;   // world-space units from center to trigger
-const VORTEX_SPEED = 1.2;           // slow deliberate orbit
-const VORTEX_ENGAGE = 0.25;
+const VORTEX_ZONE_RADIUS = 2.5;    // world-space units from center to trigger
+const VORTEX_SPEED = 0.4;           // very slow deliberate orbit
+const VORTEX_ENGAGE = 0.12;         // slow onset (~8s to full strength)
 const VORTEX_DISENGAGE = 0.12;
+
+/* ── Singularity phases ── */
+const SINGULARITY_COLLAPSE_T = 3.0; // seconds for S-curve collapse to center
+const SINGULARITY_EXPAND_T = 2.0;   // seconds for S-curve expansion to ring
+
+/** Smooth S-curve: slow start → fast middle → slow end */
+function smoothstep(t: number): number {
+  const c = Math.max(0, Math.min(1, t));
+  return c * c * (3 - 2 * c);
+}
 
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
@@ -128,6 +138,7 @@ export default function ParticleCloud({
   const mouseMoved = useRef(false);
   const lastInteractTime = useRef(0);
   const vortexStrength = useRef(0);
+  const vortexTime = useRef(0);
 
   const uniforms = useMemo(
     () => ({
@@ -408,6 +419,7 @@ export default function ParticleCloud({
         1,
         vortexStrength.current + VORTEX_ENGAGE * delta,
       );
+      vortexTime.current += delta;
       // Keep interaction alive while in vortex zone — bypass idle timeout
       lastInteractTime.current = time;
     } else {
@@ -415,6 +427,10 @@ export default function ParticleCloud({
         0,
         vortexStrength.current - VORTEX_DISENGAGE * delta,
       );
+      // Reset singularity sequence when fully disengaged
+      if (vortexStrength.current <= 0.01) {
+        vortexTime.current = 0;
+      }
     }
 
     // ── Cursor-driven formation strength ──
@@ -459,22 +475,49 @@ export default function ParticleCloud({
       const ez = particles.entropyPositions[i * 3 + 2]!;
       const rx0 = particles.ringTargets[i * 3]!;
       const ry0 = particles.ringTargets[i * 3 + 1]!;
-      const rz = particles.ringTargets[i * 3 + 2]!;
+      const rz0 = particles.ringTargets[i * 3 + 2]!;
       const tx = particles.textTargets[i * 3]!;
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
 
-      // Keplerian vortex: rotate each ring target at ω ∝ r^(-3/2)
-      // Targets orbit so the lerp pulls particles ALONG the orbit, not against it
-      let rx = rx0, ry = ry0;
+      // ── 3-phase singularity vortex ──
+      // Phase 1: S-curve collapse to origin
+      // Phase 2: S-curve expand back to ring with rotation starting
+      // Phase 3: Steady Keplerian orbit
+      let rx = rx0, ry = ry0, rz = rz0;
       if (vortexStrength.current > 0.01) {
-        const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
-        const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
-        const vAngle = keplerW * vortexStrength.current * time;
-        const cosV = Math.cos(vAngle);
-        const sinV = Math.sin(vAngle);
-        rx = rx0 * cosV - ry0 * sinV;
-        ry = rx0 * sinV + ry0 * cosV;
+        const vt = vortexTime.current;
+        const vs = vortexStrength.current;
+
+        if (vt < SINGULARITY_COLLAPSE_T) {
+          // Phase 1: Collapse to singularity
+          const collapseBlend = smoothstep(vt / SINGULARITY_COLLAPSE_T) * vs;
+          rx = rx0 * (1 - collapseBlend);
+          ry = ry0 * (1 - collapseBlend);
+          rz = rz0 * (1 - collapseBlend);
+        } else if (vt < SINGULARITY_COLLAPSE_T + SINGULARITY_EXPAND_T) {
+          // Phase 2: Expand from singularity to rotating ring
+          const expandBlend = smoothstep((vt - SINGULARITY_COLLAPSE_T) / SINGULARITY_EXPAND_T) * vs;
+          const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
+          const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
+          const rotTime = vt - SINGULARITY_COLLAPSE_T;
+          const vAngle = keplerW * rotTime;
+          const cosV = Math.cos(vAngle);
+          const sinV = Math.sin(vAngle);
+          rx = (rx0 * cosV - ry0 * sinV) * expandBlend;
+          ry = (rx0 * sinV + ry0 * cosV) * expandBlend;
+          rz = rz0 * expandBlend;
+        } else {
+          // Phase 3: Steady Keplerian rotation
+          const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
+          const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
+          const rotTime = vt - SINGULARITY_COLLAPSE_T;
+          const vAngle = keplerW * rotTime;
+          const cosV = Math.cos(vAngle);
+          const sinV = Math.sin(vAngle);
+          rx = rx0 * cosV - ry0 * sinV;
+          ry = rx0 * sinV + ry0 * cosV;
+        }
       }
 
       // Formation target: ring when no scroll, text when scrolled
