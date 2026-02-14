@@ -142,7 +142,7 @@ export default function AboutPage() {
             applied to two convergent problem spaces.
           </p>
 
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="p-6 rounded-xl border border-[var(--border)] border-l-4 border-l-[var(--accent)] bg-[var(--bg-elevated)]">
               <h3 className="font-semibold mb-3 text-[var(--accent)]">
                 AI Governance

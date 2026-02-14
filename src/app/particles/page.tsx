@@ -56,7 +56,7 @@ export default function ParticlesPage() {
               <a
                 key={id}
                 href={`#${id}`}
-                className="inline-flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors py-2 sm:py-0"
+                className="inline-flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors py-3 sm:py-0 px-1"
               >
                 <span
                   className="w-1.5 h-1.5 rounded-full opacity-40"
@@ -174,19 +174,19 @@ export default function ParticlesPage() {
           </div>
 
           {/* 2x2 offset grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 sm:gap-x-16 gap-y-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 sm:gap-x-16 gap-y-0">
             {SUPPORTING_PARTICLE_LIST.map((p, i) => (
               <div
                 key={p.id}
                 id={p.id}
-                className={`scroll-mt-24 mb-20 ${i % 2 === 1 ? "sm:mt-10" : ""}`}
+                className={`scroll-mt-24 mb-20 ${i % 2 === 1 ? "md:mt-10" : ""}`}
               >
                 <AnimatedBlueprint particleId={p.id} className="mb-5" />
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-lg font-semibold font-display text-[var(--text-primary)]">{p.name}</h3>
                   <span className="w-1.5 h-1.5 rounded-full opacity-25 shrink-0" style={{ backgroundColor: p.color }} />
                 </div>
-                <p className="text-[10px] font-mono tracking-wide uppercase text-white/30 mb-3">{p.subtitle}</p>
+                <p className="text-xs sm:text-[10px] font-mono tracking-wide uppercase text-white/30 mb-3">{p.subtitle}</p>
                 <p className="text-xs text-[var(--text-tertiary)] italic mb-2 leading-relaxed">{p.physics}</p>
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{p.role}</p>
               </div>

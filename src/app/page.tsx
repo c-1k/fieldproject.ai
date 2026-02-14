@@ -13,7 +13,7 @@ export default function Home() {
       {/* ===== SECTION 1: HERO ===== */}
       <section className="relative min-h-screen flex items-center justify-center">
         {/* Title + subtitles — centered in the black hole */}
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,7 +117,7 @@ export default function Home() {
                         {particle.name}
                       </Link>
                     </div>
-                    <p className="text-[10px] font-mono uppercase text-white/30 tracking-wider">
+                    <p className="text-xs sm:text-[10px] font-mono uppercase text-white/30 tracking-wider">
                       {particle.subtitle}
                     </p>
                   </motion.div>
@@ -203,7 +203,7 @@ export default function Home() {
                       }}
                     />
 
-                    <span className="text-[10px] font-mono text-white/30">
+                    <span className="text-xs sm:text-[10px] font-mono text-white/30">
                       {item.step}
                     </span>
                     <h3 className="font-display font-semibold text-white mt-0.5">
@@ -312,7 +312,7 @@ export default function Home() {
               disorder.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
               <div className="p-5 rounded border border-white/[0.08] backdrop-blur-sm bg-white/[0.02]">
                 <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
                   AI Governance
@@ -359,7 +359,7 @@ export default function Home() {
               behind the architecture.
             </p>
 
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
