@@ -293,13 +293,13 @@ export default function ParticleCloud({
 
   /* ── Compute ring formation targets (cursor-driven, no text) ── */
   useEffect(() => {
-    const innerR = compact ? 1.2 : 2.5;
-    const outerR = compact ? 3.0 : 6.5;
+    const innerR = compact ? 1.0 : 1.8;
+    const outerR = compact ? 2.8 : 4.5;
 
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      // Uniform area distribution within annulus
-      const t = Math.random();
+      // Bias toward inner edge — concentrates particles near event horizon
+      const t = Math.pow(Math.random(), 1.8);
       const radius = Math.sqrt(
         innerR * innerR + t * (outerR * outerR - innerR * innerR),
       );
@@ -312,43 +312,27 @@ export default function ParticleCloud({
     }
   }, [count, compact, particles.ringTargets]);
 
-  /* ── Compute text formation targets (scroll-driven) ── */
+  /* ── Compute text formation targets (scroll-driven, no lensing) ── */
   useEffect(() => {
     if (textPositions.length === 0) return;
 
     const spreadX = compact ? 2.8 : 5.5;
     const spreadY = compact ? 1.2 : 2.4;
-    const eventHorizon = compact ? 0.3 : 1.2;
-    const lensStrength = compact ? 0.5 : 2.0;
 
     for (let i = 0; i < count; i++) {
       if (i < textPositions.length) {
         const [nx, ny] = textPositions[i]!;
-        const x = nx * spreadX;
-        const y = ny * spreadY;
-
-        const r = Math.sqrt(x * x + y * y);
-        const angle = Math.atan2(y, x);
-
-        const radialPush = (eventHorizon * eventHorizon) / (r + 0.25);
-        const lensedR = r + radialPush * lensStrength;
-
-        const tangentialWarp = (eventHorizon / (r + 0.4)) * 0.8;
-        const lensedAngle = angle + tangentialWarp;
-
-        const flattenFactor = 0.55 + 0.35 * Math.min(r / 4, 1);
-
-        particles.textTargets[i * 3] = lensedR * Math.cos(lensedAngle);
-        particles.textTargets[i * 3 + 1] =
-          lensedR * Math.sin(lensedAngle) * flattenFactor;
+        // Direct text positions — no void, particles form the letters
+        particles.textTargets[i * 3] = nx * spreadX;
+        particles.textTargets[i * 3 + 1] = ny * spreadY;
         particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.25;
       } else {
-        // Extra particles: halo around text formation
+        // Extra particles: scatter loosely around text area
         const angle = Math.random() * Math.PI * 2;
-        const radius = eventHorizon + 0.4 + Math.random() * 3.5;
+        const radius = 1.0 + Math.random() * 4.5;
         particles.textTargets[i * 3] = Math.cos(angle) * radius;
         particles.textTargets[i * 3 + 1] =
-          Math.sin(angle) * radius * 0.35;
+          Math.sin(angle) * radius * 0.4;
         particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
       }
     }
