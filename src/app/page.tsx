@@ -1,401 +1,478 @@
-import TensorNetworkWrapper from "@/components/TensorNetworkWrapper";
+"use client";
 
-const FEATURES = [
-	{
-		title: "Scope Leasing",
-		description:
-			"Agents claim file ownership via glob patterns with TTL. No two agents edit the same files. Conflicts are impossible by construction.",
-		command: 'turf claim --scope "src/auth/**" --ttl-min 60',
-		icon: "{}",
-	},
-	{
-		title: "Workspace Isolation",
-		description:
-			"Every agent gets its own git worktree with a shared coordination directory. Branch-switching chaos eliminated.",
-		command: "turf workspace allocate --name agent-1 --branch feat/auth",
-		icon: "[]",
-	},
-	{
-		title: "Merge Queue",
-		description:
-			"Agents submit completed work to an ordered queue. The daemon merges them sequentially. No race conditions.",
-		command: "turf done --risk low --gates fast",
-		icon: ">>",
-	},
-	{
-		title: "Audit Trail",
-		description:
-			"Every scope claim, release, merge, and conflict is recorded. Full observability into what your agents did and why.",
-		command: "turf status --verbose",
-		icon: "##",
-	},
-	{
-		title: "Agent-Agnostic",
-		description:
-			"Works with any AI coding agent. Claude Code, Cursor, Aider, Copilot, Devin. If it can run a CLI command, it can use Turf.",
-		command: "npx @c-1k/turf init",
-		icon: "<>",
-	},
-];
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { CORE_PARTICLES, PARTICLES } from "@/lib/particles";
+import { SECTIONS, SECTION_COUNT } from "@/lib/constants";
+import ScrollIndicator from "@/components/ui/ScrollIndicator";
+import ParticleBlueprint from "@/components/ui/ParticleBlueprint";
 
-const STATS = [
-	{ value: "1,671", label: "tests passing" },
-	{ value: "0", label: "conflicts in 12-agent sprint" },
-	{ value: "5,956", label: "lines of TypeScript" },
-	{ value: "< 10min", label: "to coordinate 12 agents" },
-];
+const QuantumFieldWrapper = dynamic(
+  () => import("@/components/canvas/QuantumFieldWrapper"),
+  { ssr: false }
+);
 
-const COMPATIBLE = [
-	"Claude Code",
-	"Cursor",
-	"Aider",
-	"GitHub Copilot",
-	"Devin",
-	"Windsurf",
-	"Roo Code",
-	"Any CLI agent",
-];
+function useScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const scrollTop = window.scrollY;
+      const p = Math.min(Math.max(scrollTop / scrollHeight, 0), 1);
+      setProgress(p);
+      setActiveSection(
+        Math.min(Math.floor(p * SECTION_COUNT), SECTION_COUNT - 1)
+      );
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return { progress, activeSection };
+}
 
 export default function Home() {
-	return (
-		<main className="relative">
-			{/* ===== HERO ===== */}
-			<section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-				<TensorNetworkWrapper />
+  const { progress, activeSection } = useScrollProgress();
+  const activeFlowStep =
+    activeSection === SECTIONS.TRAVERSAL
+      ? Math.min(
+          Math.floor(
+            (progress * SECTION_COUNT - SECTIONS.TRAVERSAL) *
+              CORE_PARTICLES.length
+          ),
+          CORE_PARTICLES.length - 1
+        )
+      : -1;
 
-				<div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-					<div className="inline-block mb-6 px-3 py-1 rounded-full border border-[var(--border)] text-xs text-[var(--text-secondary)] tracking-wider uppercase">
-						Introducing Turf
-					</div>
+  void activeFlowStep;
 
-					<h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6">
-						Your AI agents keep
-						<br />
-						<span className="text-[var(--accent)]">
-							stepping on each other&apos;s code.
-						</span>
-					</h1>
+  return (
+    <main className="relative">
+      {/* Fixed 3D background — fades to subtle atmosphere past hero */}
+      <div
+        className="fixed inset-0 -z-10 transition-opacity duration-700"
+        style={{ opacity: activeSection === 0 ? 1 : 0.25 }}
+      >
+        <QuantumFieldWrapper scrollProgress={progress} />
+      </div>
 
-					<p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-10 leading-relaxed">
-						Turf gives every agent its own scope, its own workspace,
-						and a merge queue that actually works.
-					</p>
+      {/* ===== SECTION 1: HERO ===== */}
+      <section className="relative min-h-screen flex items-center justify-center">
+        {/* Title + subtitles — centered in the black hole */}
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 2.0 }}
+          >
+            <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter font-display mb-4">
+              Field Project
+            </h1>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.0, delay: 2.8 }}
+          >
+            <p className="text-sm sm:text-base tracking-[0.2em] uppercase text-[var(--text-tertiary)] font-light">
+              Architecture as counter-force to entropy
+            </p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.0, delay: 3.4 }}
+          >
+            <p className="text-sm text-[var(--text-tertiary)] mt-4">
+              10 particles. 12 laws. One canonical path.
+            </p>
+          </motion.div>
+        </div>
 
-					{/* Install command */}
-					<div className="inline-flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg px-5 py-3 mb-8 font-mono text-sm">
-						<span className="text-[var(--text-tertiary)]">$</span>
-						<span className="text-[var(--text-primary)]">
-							npm install @c-1k/turf
-						</span>
-						<button
-							className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors ml-2"
-							title="Copy to clipboard"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<rect
-									x="9"
-									y="9"
-									width="13"
-									height="13"
-									rx="2"
-								/>
-								<path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-							</svg>
-						</button>
-					</div>
+        {/* Scroll indicator — pinned to bottom */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 4.0 }}
+        >
+          <ScrollIndicator />
+        </motion.div>
 
-					<div className="flex items-center justify-center gap-4">
-						<a
-							href="https://github.com/c-1k/fermion"
-							className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-						>
-							View on GitHub
-						</a>
-						<a
-							href="#features"
-							className="px-6 py-3 border border-[var(--border)] text-[var(--text-secondary)] rounded-lg font-medium hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] transition-all"
-						>
-							Learn more
-						</a>
-					</div>
-				</div>
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg)] to-transparent" />
+      </section>
 
-				{/* Gradient fade at bottom */}
-				<div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent" />
-			</section>
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
 
-			{/* ===== PROBLEM ===== */}
-			<section className="py-24 px-6">
-				<div className="max-w-4xl mx-auto text-center">
-					<h2 className="text-3xl sm:text-4xl font-bold mb-6">
-						12 agents. One repo. Zero coordination.
-					</h2>
-					<p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto mb-12 leading-relaxed">
-						You spin up a dozen AI agents to parallelize your
-						codebase. They all checkout the same branch. They all
-						edit the same files. You get merge hell, overwritten
-						work, and hours of manual cleanup.
-					</p>
+      {/* ===== SECTION 2: THE PIPELINE ===== */}
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
+              The Canonical Pipeline
+            </h2>
+            <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
+              Every event follows the same path. No step may be skipped.
+              No step may absorb the responsibility of another.
+            </p>
 
-					<div className="grid md:grid-cols-2 gap-6 text-left">
-						<div className="p-6 rounded-xl border border-red-500/20 bg-red-500/5">
-							<div className="text-red-400 font-mono text-sm mb-3">
-								Without Turf
-							</div>
-							<ul className="space-y-2 text-[var(--text-secondary)] text-sm">
-								<li>
-									Agent A and Agent B both edit
-									src/auth/middleware.ts
-								</li>
-								<li>
-									Agent C&apos;s branch conflicts with Agent
-									D&apos;s branch
-								</li>
-								<li>3 hours of manual merge resolution</li>
-								<li>You swear off multi-agent workflows</li>
-							</ul>
-						</div>
-						<div className="p-6 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
-							<div className="text-[var(--accent)] font-mono text-sm mb-3">
-								With Turf
-							</div>
-							<ul className="space-y-2 text-[var(--text-secondary)] text-sm">
-								<li>
-									Agent A claims src/auth/**, Agent B claims
-									src/api/**
-								</li>
-								<li>
-									Each agent works in an isolated worktree
-								</li>
-								<li>
-									Merge queue integrates work sequentially
-								</li>
-								<li>12 agents, 10 minutes, zero conflicts</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</section>
+            {/* Compact horizontal flow */}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mb-16 px-2 overflow-hidden">
+              {CORE_PARTICLES.map((id, i) => (
+                <div key={id} className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-xs sm:text-sm font-mono text-white whitespace-nowrap">
+                    {PARTICLES[id].name}
+                  </span>
+                  {i < CORE_PARTICLES.length - 1 && (
+                    <span className="text-white/10 font-mono text-xs sm:text-sm">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
 
-			{/* ===== FEATURES ===== */}
-			<section id="features" className="py-24 px-6">
-				<div className="max-w-5xl mx-auto">
-					<div className="text-center mb-16">
-						<h2 className="text-3xl sm:text-4xl font-bold mb-4">
-							Five primitives. Zero conflicts.
-						</h2>
-						<p className="text-[var(--text-secondary)] text-lg">
-							Everything your agents need to work in parallel
-							without stepping on each other.
-						</p>
-					</div>
+            {/* Blueprint grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+              {CORE_PARTICLES.map((id, i) => {
+                const particle = PARTICLES[id];
+                return (
+                  <motion.div
+                    key={id}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.08 }}
+                  >
+                    <ParticleBlueprint particleId={id} className="mb-3" />
+                    <div className="flex items-center gap-2 mb-1">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full opacity-25"
+                        style={{ backgroundColor: particle.color }}
+                      />
+                      <Link
+                        href={`/particles/${id}`}
+                        className="text-base sm:text-lg font-semibold font-display text-white hover:text-white/80 transition-colors py-1 inline-flex items-center min-h-[44px]"
+                      >
+                        {particle.name}
+                      </Link>
+                    </div>
+                    <p className="text-[10px] font-mono uppercase text-white/15 tracking-wider">
+                      {particle.subtitle}
+                    </p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-					<div className="grid gap-6">
-						{FEATURES.map((feature) => (
-							<div
-								key={feature.title}
-								className="group p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--border-hover)] transition-colors"
-							>
-								<div className="flex items-start gap-4">
-									<div className="font-mono text-[var(--accent)] text-lg mt-0.5 opacity-50">
-										{feature.icon}
-									</div>
-									<div className="flex-1">
-										<h3 className="text-xl font-semibold mb-2">
-											{feature.title}
-										</h3>
-										<p className="text-[var(--text-secondary)] mb-4 leading-relaxed">
-											{feature.description}
-										</p>
-										<code className="inline-block px-3 py-1.5 rounded-md bg-[var(--bg)] border border-[var(--border)] text-sm text-[var(--text-secondary)] font-mono">
-											$ {feature.command}
-										</code>
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
 
-			{/* ===== HOW IT WORKS ===== */}
-			<section className="py-24 px-6 border-t border-[var(--border)]">
-				<div className="max-w-3xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
-						How it works
-					</h2>
+      {/* ===== SECTION 3: EVENT TRAVERSAL ===== */}
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-2xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
+              An Event Traverses the Field
+            </h2>
+            <p className="text-center text-[var(--text-tertiary)] mb-16 text-sm">
+              Each particle activates in sequence.
+            </p>
 
-					<div className="space-y-0">
-						{[
-							{
-								step: "1",
-								title: "Initialize",
-								cmd: "npx @c-1k/turf init",
-								desc: "Creates .coord/ directory and turf.config.json in your repo.",
-							},
-							{
-								step: "2",
-								title: "Agents claim scope",
-								cmd: 'turf claim --scope "src/auth/**" --ttl-min 60',
-								desc: "Each agent declares which files it will edit. Conflicts are rejected.",
-							},
-							{
-								step: "3",
-								title: "Agents work in isolation",
-								cmd: "turf workspace allocate --name agent-1",
-								desc: "Each agent gets its own git worktree. No branch interference.",
-							},
-							{
-								step: "4",
-								title: "Agents submit to queue",
-								cmd: "turf done --risk low --gates fast",
-								desc: "Pushes the branch, enqueues for merge, releases the scope lease.",
-							},
-							{
-								step: "5",
-								title: "Daemon merges sequentially",
-								cmd: "turf daemon start",
-								desc: "Background process integrates queued work in order. Zero conflicts.",
-							},
-						].map((item) => (
-							<div
-								key={item.step}
-								className="flex gap-6 pb-10 relative"
-							>
-								{/* Vertical line */}
-								<div className="flex flex-col items-center">
-									<div className="w-8 h-8 rounded-full border border-[var(--accent)] flex items-center justify-center text-sm font-mono text-[var(--accent)] shrink-0">
-										{item.step}
-									</div>
-									{item.step !== "5" && (
-										<div className="w-px flex-1 bg-[var(--border)] mt-2" />
-									)}
-								</div>
-								<div className="pb-2">
-									<h3 className="font-semibold text-lg mb-1">
-										{item.title}
-									</h3>
-									<p className="text-[var(--text-secondary)] text-sm mb-3">
-										{item.desc}
-									</p>
-									<code className="inline-block px-3 py-1.5 rounded-md bg-[var(--bg-surface)] border border-[var(--border)] text-xs text-[var(--text-secondary)] font-mono">
-										$ {item.cmd}
-									</code>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
+            <div className="relative ml-4">
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-white/[0.06]" />
 
-			{/* ===== STATS ===== */}
-			<section className="py-24 px-6 border-t border-[var(--border)]">
-				<div className="max-w-4xl mx-auto">
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-						{STATS.map((stat) => (
-							<div key={stat.label} className="text-center">
-								<div className="text-3xl sm:text-4xl font-bold text-[var(--accent)] mb-2">
-									{stat.value}
-								</div>
-								<div className="text-sm text-[var(--text-secondary)]">
-									{stat.label}
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
+              <div className="space-y-8">
+                {[
+                  {
+                    step: "01",
+                    particle: "boson" as const,
+                    text: "External system sends a webhook. Boson validates identity, assigns CorrelationId, wraps into EventEnvelope, signs with HMAC. Returns 202.",
+                  },
+                  {
+                    step: "02",
+                    particle: "fermion" as const,
+                    text: "Fermion verifies HMAC, invokes Quark to parse the typed domain event, then consults Higgs for policy.",
+                  },
+                  {
+                    step: "03",
+                    particle: "higgs" as const,
+                    text: "\u201CTenant X wants to execute Action Y \u2014 allowed?\u201D Higgs evaluates and returns PolicyDecision with effective config and redaction rules.",
+                  },
+                  {
+                    step: "04",
+                    particle: "hadron" as const,
+                    text: "Fermion builds the ActionPlan, records step state in Hadron for durability, emits decision record to Neutrino.",
+                  },
+                  {
+                    step: "05",
+                    particle: "photon" as const,
+                    text: "For each Action in the plan: Photon resolves credentials, executes the typed connector, classifies the result.",
+                  },
+                  {
+                    step: "06",
+                    particle: "neutrino" as const,
+                    text: "Every decision, action, and outcome is recorded in Neutrino\u2019s append-only audit ledger. Full trace available.",
+                  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={item.step}
+                    className="relative pl-8"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20%" }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                  >
+                    {/* Timeline dot */}
+                    <div
+                      className="absolute left-0 top-1.5 w-2 h-2 rounded-full -translate-x-[3.5px]"
+                      style={{
+                        backgroundColor: PARTICLES[item.particle].color,
+                        opacity: 0.25,
+                      }}
+                    />
 
-			{/* ===== COMPATIBILITY ===== */}
-			<section className="py-24 px-6 border-t border-[var(--border)]">
-				<div className="max-w-3xl mx-auto text-center">
-					<h2 className="text-3xl sm:text-4xl font-bold mb-4">
-						Works with every agent
-					</h2>
-					<p className="text-[var(--text-secondary)] text-lg mb-10">
-						If it can run a CLI command, it can use Turf.
-					</p>
-					<div className="flex flex-wrap items-center justify-center gap-3">
-						{COMPATIBLE.map((name) => (
-							<span
-								key={name}
-								className="px-4 py-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-sm text-[var(--text-secondary)]"
-							>
-								{name}
-							</span>
-						))}
-					</div>
-				</div>
-			</section>
+                    <span className="text-[10px] font-mono text-white/20">
+                      {item.step}
+                    </span>
+                    <h3 className="font-display font-semibold text-white mt-0.5">
+                      {PARTICLES[item.particle].name}
+                    </h3>
+                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-1">
+                      {item.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-			{/* ===== FINAL CTA ===== */}
-			<section className="py-32 px-6 border-t border-[var(--border)]">
-				<div className="max-w-3xl mx-auto text-center">
-					<h2 className="text-3xl sm:text-5xl font-bold mb-6">
-						Stop resolving merge conflicts.
-						<br />
-						<span className="text-[var(--accent)]">
-							Start shipping.
-						</span>
-					</h2>
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
 
-					<div className="inline-flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg px-5 py-3 mb-8 font-mono text-sm">
-						<span className="text-[var(--text-tertiary)]">$</span>
-						<span>npm install @c-1k/turf</span>
-					</div>
+      {/* ===== SECTION 4: THE METAPHOR ===== */}
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
+              The Names Are Not Decorative
+            </h2>
+            <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
+              Each name encodes what the service does and &mdash; critically
+              &mdash; what it must never do.
+            </p>
 
-					<div className="flex items-center justify-center gap-4">
-						<a
-							href="https://github.com/c-1k/fermion"
-							className="px-6 py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-						>
-							View on GitHub
-						</a>
-						<a
-							href="https://www.npmjs.com/package/@c-1k/turf"
-							className="px-6 py-3 border border-[var(--border)] text-[var(--text-secondary)] rounded-lg font-medium hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] transition-all"
-						>
-							npm package
-						</a>
-					</div>
-				</div>
-			</section>
+            <div className="space-y-1.5">
+              {[
+                {
+                  q: "Can Neutrino reject an event?",
+                  a: "Neutrinos don\u2019t interact with matter. Neutrino observes; it does not mutate.",
+                },
+                {
+                  q: "Can Boson decide routing?",
+                  a: "Bosons carry forces; they don\u2019t decide trajectories. That\u2019s Fermion\u2019s job.",
+                },
+                {
+                  q: "Can Photon check policy?",
+                  a: "Photons execute; they don\u2019t govern. Higgs governs.",
+                },
+                {
+                  q: "Can Fermion hold durable state?",
+                  a: "Fermions are stateless deciders. Hadron holds durable state.",
+                },
+                {
+                  q: "Where does tenant config live?",
+                  a: "The Higgs field gives particles their properties. Tenant config lives in Higgs.",
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.q}
+                  className={`flex gap-3 px-3 sm:px-4 py-3 rounded backdrop-blur-sm bg-white/[0.02] border border-white/[0.03] max-w-xl ${i % 2 === 0 ? "sm:ml-0 sm:mr-auto" : "sm:ml-auto sm:mr-0"}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <div>
+                    <span className="text-sm text-[var(--text-secondary)]">
+                      {item.q}
+                    </span>
+                    <br />
+                    <span className="text-sm text-[var(--text-tertiary)]">
+                      {item.a}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-			{/* ===== FOOTER ===== */}
-			<footer className="py-12 px-6 border-t border-[var(--border)]">
-				<div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-					<div className="text-sm text-[var(--text-tertiary)]">
-						Field Project
-					</div>
-					<div className="flex items-center gap-6 text-sm text-[var(--text-tertiary)]">
-						<a
-							href="https://github.com/c-1k/fermion"
-							className="hover:text-[var(--text-secondary)] transition-colors"
-						>
-							GitHub
-						</a>
-						<a
-							href="https://www.npmjs.com/package/@c-1k/turf"
-							className="hover:text-[var(--text-secondary)] transition-colors"
-						>
-							npm
-						</a>
-						<a
-							href="https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md"
-							className="hover:text-[var(--text-secondary)] transition-colors"
-						>
-							Docs
-						</a>
-					</div>
-				</div>
-			</footer>
-		</main>
-	);
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
+      {/* ===== SECTION 5: ENTROPY ===== */}
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold font-display text-center mb-3 tracking-tight">
+              Entropy Is the Default
+            </h2>
+            <p className="text-center text-[var(--text-tertiary)] mb-16 max-w-lg mx-auto text-sm leading-relaxed">
+              Without a field &mdash; without canonical paths, enforced
+              boundaries, and immutable audit &mdash; systems trend toward
+              disorder.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
+              <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
+                <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
+                  AI Governance
+                </h3>
+                <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
+                  Route AI requests through a governed pipeline. Policy is
+                  evaluated before execution. Every decision, action, and outcome
+                  is auditable.
+                </p>
+              </div>
+              <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
+                <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
+                  Event-Driven Platform
+                </h3>
+                <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
+                  Build internal automation &mdash; CI/CD orchestration, incident
+                  response, approval workflows &mdash; on a governed event backbone.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Section divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+      </div>
+
+      {/* ===== SECTION 6: EXPLORE ===== */}
+      <section className="min-h-screen flex items-center py-16 sm:py-24 px-4 sm:px-6">
+        <div className="max-w-2xl mx-auto w-full text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold font-display mb-4 tracking-tight">
+              Explore the Field
+            </h2>
+            <p className="text-[var(--text-tertiary)] text-sm mb-16 max-w-md mx-auto">
+              The particles, the laws that govern them, and the philosophy
+              behind the architecture.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-3">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0 }}
+              >
+                <Link
+                  href="/particles"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-blue-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    10
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Particles</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    Every service, its physics analog, and what it must never do
+                  </div>
+                </Link>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <Link
+                  href="/laws"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-purple-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    12
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Laws</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    Non-negotiable invariants that govern the field
+                  </div>
+                </Link>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Link
+                  href="/about"
+                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-cyan-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                >
+                  <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                    &infin;
+                  </div>
+                  <div className="text-sm font-mono text-[var(--text-secondary)] mb-1">Entropy</div>
+                  <div className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                    The philosophy, the metaphor, and the two endgames
+                  </div>
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </main>
+  );
 }
