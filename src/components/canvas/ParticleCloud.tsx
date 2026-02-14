@@ -457,12 +457,25 @@ export default function ParticleCloud({
       const ex = particles.entropyPositions[i * 3]!;
       const ey = particles.entropyPositions[i * 3 + 1]!;
       const ez = particles.entropyPositions[i * 3 + 2]!;
-      const rx = particles.ringTargets[i * 3]!;
-      const ry = particles.ringTargets[i * 3 + 1]!;
+      const rx0 = particles.ringTargets[i * 3]!;
+      const ry0 = particles.ringTargets[i * 3 + 1]!;
       const rz = particles.ringTargets[i * 3 + 2]!;
       const tx = particles.textTargets[i * 3]!;
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
+
+      // Keplerian vortex: rotate each ring target at ω ∝ r^(-3/2)
+      // Targets orbit so the lerp pulls particles ALONG the orbit, not against it
+      let rx = rx0, ry = ry0;
+      if (vortexStrength.current > 0.01) {
+        const rDist = Math.sqrt(rx0 * rx0 + ry0 * ry0);
+        const keplerW = VORTEX_SPEED / Math.pow(Math.max(rDist, 0.5), 1.5);
+        const vAngle = keplerW * vortexStrength.current * time;
+        const cosV = Math.cos(vAngle);
+        const sinV = Math.sin(vAngle);
+        rx = rx0 * cosV - ry0 * sinV;
+        ry = rx0 * sinV + ry0 * cosV;
+      }
 
       // Formation target: ring when no scroll, text when scrolled
       const ftx = rx + (tx - rx) * scrollStrength;
@@ -488,19 +501,6 @@ export default function ParticleCloud({
         const orbStr = 0.3 + 0.7 * strength;
         x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr;
         y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr;
-      }
-
-      // ── Vortex: direct Keplerian orbital motion ──
-      // ω ∝ r^(-3/2) — inner particles orbit faster than outer
-      if (vortexStrength.current > 0.01 && rr > 0.5) {
-        const omega = VORTEX_SPEED / Math.pow(rr, 1.5);
-        const dTheta = omega * vortexStrength.current * delta;
-        const cosD = Math.cos(dTheta);
-        const sinD = Math.sin(dTheta);
-        const nx = x * cosD - y * sinD;
-        const ny = x * sinD + y * cosD;
-        x = nx;
-        y = ny;
       }
 
       // Jitter — amplified in entropy mode for alive feel
