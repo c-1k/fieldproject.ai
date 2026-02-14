@@ -86,7 +86,7 @@ export default function Home() {
                     {PARTICLES[id].name}
                   </span>
                   {i < CORE_PARTICLES.length - 1 && (
-                    <span className="text-white/10 font-mono text-xs sm:text-sm">→</span>
+                    <span className="text-white/25 font-mono text-xs sm:text-sm">→</span>
                   )}
                 </div>
               ))}
@@ -117,7 +117,7 @@ export default function Home() {
                         {particle.name}
                       </Link>
                     </div>
-                    <p className="text-[10px] font-mono uppercase text-white/15 tracking-wider">
+                    <p className="text-[10px] font-mono uppercase text-white/30 tracking-wider">
                       {particle.subtitle}
                     </p>
                   </motion.div>
@@ -151,7 +151,7 @@ export default function Home() {
 
             <div className="relative ml-4">
               {/* Vertical timeline line */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-white/[0.06]" />
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-white/[0.08]" />
 
               <div className="space-y-8">
                 {[
@@ -203,7 +203,7 @@ export default function Home() {
                       }}
                     />
 
-                    <span className="text-[10px] font-mono text-white/20">
+                    <span className="text-[10px] font-mono text-white/30">
                       {item.step}
                     </span>
                     <h3 className="font-display font-semibold text-white mt-0.5">
@@ -267,7 +267,7 @@ export default function Home() {
               ].map((item, i) => (
                 <motion.div
                   key={item.q}
-                  className={`flex gap-3 px-3 sm:px-4 py-3 rounded backdrop-blur-sm bg-white/[0.02] border border-white/[0.03] max-w-xl ${i % 2 === 0 ? "sm:ml-0 sm:mr-auto" : "sm:ml-auto sm:mr-0"}`}
+                  className={`flex gap-3 px-3 sm:px-4 py-3 rounded backdrop-blur-sm bg-white/[0.02] border border-white/[0.06] max-w-xl ${i % 2 === 0 ? "sm:ml-0 sm:mr-auto" : "sm:ml-auto sm:mr-0"}`}
                   initial={{ opacity: 0, scale: 0.95 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -313,7 +313,7 @@ export default function Home() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
-              <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
+              <div className="p-5 rounded border border-white/[0.08] backdrop-blur-sm bg-white/[0.02]">
                 <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
                   AI Governance
                 </h3>
@@ -323,7 +323,7 @@ export default function Home() {
                   is auditable.
                 </p>
               </div>
-              <div className="p-5 rounded border border-white/[0.04] backdrop-blur-sm bg-white/[0.02]">
+              <div className="p-5 rounded border border-white/[0.08] backdrop-blur-sm bg-white/[0.02]">
                 <h3 className="text-sm font-mono text-[var(--text-secondary)] mb-2 tracking-wide">
                   Event-Driven Platform
                 </h3>
@@ -368,7 +368,7 @@ export default function Home() {
               >
                 <Link
                   href="/particles"
-                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-blue-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                  className="group p-6 rounded border border-white/[0.08] border-l-[3px] border-l-blue-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
                 >
                   <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                     10
@@ -387,7 +387,7 @@ export default function Home() {
               >
                 <Link
                   href="/laws"
-                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-purple-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                  className="group p-6 rounded border border-white/[0.08] border-l-[3px] border-l-purple-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
                 >
                   <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                     12
@@ -406,7 +406,7 @@ export default function Home() {
               >
                 <Link
                   href="/about"
-                  className="group p-6 rounded border border-white/[0.04] border-l-[3px] border-l-cyan-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
+                  className="group p-6 rounded border border-white/[0.08] border-l-[3px] border-l-cyan-500/60 backdrop-blur-sm bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left block h-full"
                 >
                   <div className="text-2xl sm:text-3xl font-display font-bold mb-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                     &infin;
