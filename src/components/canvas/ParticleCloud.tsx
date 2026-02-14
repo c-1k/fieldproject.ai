@@ -39,6 +39,17 @@ const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
 const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
 const BIRTH_DURATION = 2.5;     // seconds over which particles randomly appear
 
+/* ── Accretion disk tails ── */
+const TAIL_SHARPNESS = 6;       // higher = narrower tails (cos^n falloff)
+const TAIL_LENGTH = 3.5;        // max tail extension at horizontal angles
+const RING_FLATNESS = 0.72;     // 1.0 = perfect circle, lower = elliptical
+
+/* ── Vortex easter egg ── */
+const VORTEX_ZONE_RADIUS = 2.5; // world-space units from center to trigger
+const VORTEX_SPEED = 0.35;      // base rotation speed (radians/sec)
+const VORTEX_ENGAGE = 0.25;     // ramp-up rate
+const VORTEX_DISENGAGE = 0.12;  // ramp-down rate
+
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
  */
@@ -111,6 +122,7 @@ export default function ParticleCloud({
   const mouseOnPage = useRef(true);
   const mouseMoved = useRef(false);
   const lastInteractTime = useRef(0);
+  const vortexStrength = useRef(0);
 
   const uniforms = useMemo(
     () => ({
@@ -291,24 +303,32 @@ export default function ParticleCloud({
     handleMouseLeave,
   ]);
 
-  /* ── Compute ring formation targets (cursor-driven, no text) ── */
+  /* ── Compute ring formation targets (accretion disk with tails) ── */
   useEffect(() => {
     const innerR = compact ? 1.0 : 1.8;
-    const outerR = compact ? 2.8 : 4.5;
+    const outerR = compact ? 2.8 : 3.8;
 
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       // Bias toward inner edge — concentrates particles near event horizon
-      const t = Math.pow(Math.random(), 1.8);
-      const radius = Math.sqrt(
+      const t = Math.pow(Math.random(), 2.0);
+      const baseRadius = Math.sqrt(
         innerR * innerR + t * (outerR * outerR - innerR * innerR),
       );
-      const flatness = 0.35 + 0.15 * Math.random();
+
+      // Accretion disk tails: sharp extensions at horizontal angles (3/9 o'clock)
+      const horizontalness = Math.pow(Math.abs(Math.cos(angle)), TAIL_SHARPNESS);
+      const tailExt = TAIL_LENGTH * horizontalness;
+      const radius = baseRadius + tailExt;
+
+      // Vertical: mostly circular, but flatten in tail regions to keep tails thin
+      const tailVerticalCompress = 1 - horizontalness * 0.7;
+      const flatness = RING_FLATNESS + 0.08 * Math.random();
 
       particles.ringTargets[i * 3] = Math.cos(angle) * radius;
       particles.ringTargets[i * 3 + 1] =
-        Math.sin(angle) * radius * flatness;
-      particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+        Math.sin(angle) * radius * flatness * tailVerticalCompress;
+      particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
     }
   }, [count, compact, particles.ringTargets]);
 
@@ -361,13 +381,44 @@ export default function ParticleCloud({
       1,
     );
 
-    // ── Cursor-driven formation strength (secondary) ──
+    // Project mouse into world space — zero allocations
+    _mouseVec.set(mouse.current.x, mouse.current.y, 0.5);
+    _mouseVec.unproject(camera);
+    _dir.copy(_mouseVec).sub(camera.position).normalize();
+    const dist = -camera.position.z / _dir.z;
+    _mouseWorld.copy(camera.position).addScaledVector(_dir, dist);
+
+    const mx = _mouseWorld.x;
+    const my = _mouseWorld.y;
+
+    // ── Vortex: detect cursor near center ──
+    const mouseCenterDist = Math.sqrt(mx * mx + my * my);
+    const inVortexZone =
+      mouseCenterDist < VORTEX_ZONE_RADIUS &&
+      mouseOnPage.current &&
+      hasEverInteracted.current;
+
+    if (inVortexZone) {
+      vortexStrength.current = Math.min(
+        1,
+        vortexStrength.current + VORTEX_ENGAGE * delta,
+      );
+      // Keep interaction alive while in vortex zone — bypass idle timeout
+      lastInteractTime.current = time;
+    } else {
+      vortexStrength.current = Math.max(
+        0,
+        vortexStrength.current - VORTEX_DISENGAGE * delta,
+      );
+    }
+
+    // ── Cursor-driven formation strength ──
     const timeSinceInteract = time - lastInteractTime.current;
     let cursorTarget = 0;
     if (
       hasEverInteracted.current &&
       mouseOnPage.current &&
-      timeSinceInteract < IDLE_TIMEOUT
+      (timeSinceInteract < IDLE_TIMEOUT || vortexStrength.current > 0.01)
     ) {
       cursorTarget = 1;
     }
@@ -387,20 +438,15 @@ export default function ParticleCloud({
     // Combined: whichever is higher — scroll or cursor
     const strength = Math.max(scrollStrength, interactionStrength.current);
 
+    // ── Vortex rotation angle (continuous, scales with vortex strength) ──
+    const vortexAngle = vortexStrength.current * VORTEX_SPEED * time;
+    const cosV = Math.cos(vortexAngle);
+    const sinV = Math.sin(vortexAngle);
+
     // Update shader time
     if (shaderRef.current) {
       shaderRef.current.uniforms.uTime!.value = time;
     }
-
-    // Project mouse into world space — zero allocations
-    _mouseVec.set(mouse.current.x, mouse.current.y, 0.5);
-    _mouseVec.unproject(camera);
-    _dir.copy(_mouseVec).sub(camera.position).normalize();
-    const dist = -camera.position.z / _dir.z;
-    _mouseWorld.copy(camera.position).addScaledVector(_dir, dist);
-
-    const mx = _mouseWorld.x;
-    const my = _mouseWorld.y;
 
     for (let i = 0; i < count; i++) {
       let x = particles.positions[i * 3]!;
@@ -411,12 +457,16 @@ export default function ParticleCloud({
       const ex = particles.entropyPositions[i * 3]!;
       const ey = particles.entropyPositions[i * 3 + 1]!;
       const ez = particles.entropyPositions[i * 3 + 2]!;
-      const rx = particles.ringTargets[i * 3]!;
-      const ry = particles.ringTargets[i * 3 + 1]!;
+      const rx0 = particles.ringTargets[i * 3]!;
+      const ry0 = particles.ringTargets[i * 3 + 1]!;
       const rz = particles.ringTargets[i * 3 + 2]!;
       const tx = particles.textTargets[i * 3]!;
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
+
+      // Apply vortex rotation to ring targets
+      const rx = rx0 * cosV - ry0 * sinV;
+      const ry = rx0 * sinV + ry0 * cosV;
 
       // Formation target: ring when no scroll, text when scrolled
       const ftx = rx + (tx - rx) * scrollStrength;
@@ -433,15 +483,17 @@ export default function ParticleCloud({
       y += (effectiveY - y) * LERP_SPEED * dt;
       z += (effectiveZ - z) * LERP_SPEED * dt;
 
-      // Orbital drift — reduced in entropy mode
+      // Orbital drift — amplified during vortex
       const rrSq = x * x + y * y;
       const rr = Math.sqrt(rrSq);
       if (rr > 0.3) {
         const orbSpeed = ORB_SPEED_FACTOR / (rr + 0.4);
         const orbAngle = Math.atan2(y, x);
         const orbStr = 0.3 + 0.7 * strength;
-        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr;
-        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr;
+        // Vortex boosts orbital velocity for visible spinning
+        const vortexBoost = 1 + vortexStrength.current * 8;
+        x += -Math.sin(orbAngle) * orbSpeed * ORB_DRIFT_X * dt * orbStr * vortexBoost;
+        y += Math.cos(orbAngle) * orbSpeed * ORB_DRIFT_Y * dt * orbStr * vortexBoost;
       }
 
       // Jitter — amplified in entropy mode for alive feel
