@@ -15,9 +15,6 @@ import { Vector2 } from "three";
 import ParticleCloud from "./ParticleCloud";
 import { useIsMobile, usePrefersReducedMotion } from "@/lib/useMobile";
 
-interface QuantumFieldProps {
-  scrollProgress: number;
-}
 
 function Scene({ count, compact }: { count: number; compact: boolean }) {
   return (
@@ -37,8 +34,7 @@ function Scene({ count, compact }: { count: number; compact: boolean }) {
   );
 }
 
-export default function QuantumField({ scrollProgress }: QuantumFieldProps) {
-  void scrollProgress;
+export default function QuantumField() {
 
   const isMobile = useIsMobile();
   const reducedMotion = usePrefersReducedMotion();

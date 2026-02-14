@@ -8,9 +8,7 @@ const QuantumField = dynamic(
   { ssr: false },
 );
 
-interface QuantumFieldWrapperProps {
-  scrollProgress: number;
-}
+/* no props — scroll is read directly inside the R3F frame loop */
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -56,9 +54,7 @@ function isWebGLAvailable(): boolean {
   }
 }
 
-export default function QuantumFieldWrapper({
-  scrollProgress,
-}: QuantumFieldWrapperProps) {
+export default function QuantumFieldWrapper() {
   const [key, setKey] = useState(0);
 
   // Auto-recover from WebGL context loss by remounting
@@ -90,7 +86,7 @@ export default function QuantumFieldWrapper({
   return (
     <div aria-hidden="true" className="absolute inset-0">
       <WebGLErrorBoundary key={key} onError={handleError}>
-        <QuantumField scrollProgress={scrollProgress} />
+        <QuantumField />
       </WebGLErrorBoundary>
     </div>
   );

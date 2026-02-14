@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { CORE_PARTICLES, PARTICLES } from "@/lib/particles";
-import { SECTIONS, SECTION_COUNT } from "@/lib/constants";
+import { SECTION_COUNT } from "@/lib/constants";
 import ScrollIndicator from "@/components/ui/ScrollIndicator";
 import ParticleBlueprint from "@/components/ui/ParticleBlueprint";
 
@@ -14,8 +14,7 @@ const QuantumFieldWrapper = dynamic(
   { ssr: false }
 );
 
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
+function useActiveSection() {
   const [activeSection, setActiveSection] = useState(0);
 
   useEffect(() => {
@@ -24,33 +23,19 @@ function useScrollProgress() {
         document.documentElement.scrollHeight - window.innerHeight;
       const scrollTop = window.scrollY;
       const p = Math.min(Math.max(scrollTop / scrollHeight, 0), 1);
-      setProgress(p);
-      setActiveSection(
-        Math.min(Math.floor(p * SECTION_COUNT), SECTION_COUNT - 1)
-      );
+      const next = Math.min(Math.floor(p * SECTION_COUNT), SECTION_COUNT - 1);
+      setActiveSection((prev) => (prev !== next ? next : prev));
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return { progress, activeSection };
+  return activeSection;
 }
 
 export default function Home() {
-  const { progress, activeSection } = useScrollProgress();
-  const activeFlowStep =
-    activeSection === SECTIONS.TRAVERSAL
-      ? Math.min(
-          Math.floor(
-            (progress * SECTION_COUNT - SECTIONS.TRAVERSAL) *
-              CORE_PARTICLES.length
-          ),
-          CORE_PARTICLES.length - 1
-        )
-      : -1;
-
-  void activeFlowStep;
+  const activeSection = useActiveSection();
 
   return (
     <main className="relative">
@@ -59,7 +44,7 @@ export default function Home() {
         className="fixed inset-0 -z-10 transition-opacity duration-700"
         style={{ opacity: activeSection === 0 ? 1 : 0.25 }}
       >
-        <QuantumFieldWrapper scrollProgress={progress} />
+        <QuantumFieldWrapper />
       </div>
 
       {/* ===== SECTION 1: HERO ===== */}

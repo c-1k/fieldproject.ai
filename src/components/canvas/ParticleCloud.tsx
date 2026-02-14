@@ -39,6 +39,7 @@ const DISENGAGE_RATE = 0.12;    // decay 1→0 in ~8s (slow dissolve)
 const IDLE_TIMEOUT = 8.0;       // seconds of no movement before decay begins
 const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
 const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
+const BIRTH_DURATION = 2.5;     // seconds over which particles randomly appear
 
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
@@ -141,6 +142,7 @@ export default function ParticleCloud({
     const scales = new Float32Array(count);
     const colorIndices = new Uint8Array(count);
     const randomOffsets = new Float32Array(count);
+    const birthDelays = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * ENTROPY_SPREAD_X;
@@ -169,6 +171,7 @@ export default function ParticleCloud({
 
       colorIndices[i] = Math.floor(Math.random() * PARTICLE_COLORS.length);
       randomOffsets[i] = Math.random() * Math.PI * 2;
+      birthDelays[i] = Math.random() * BIRTH_DURATION;
     }
     return {
       positions,
@@ -177,6 +180,7 @@ export default function ParticleCloud({
       scales,
       colorIndices,
       randomOffsets,
+      birthDelays,
     };
   }, [count]);
 
@@ -476,18 +480,24 @@ export default function ParticleCloud({
       particles.positions[i * 3 + 1] = y;
       particles.positions[i * 3 + 2] = z;
 
-      // Scale with proximity glow
+      // Scale with proximity glow + birth fade-in
       const baseScale = particles.scales[i]!;
       const pulse = 0.9 + 0.1 * Math.sin(time * 1.5 + offset);
       const isNode = i < NODE_COUNT;
       const proximityBoost = 1.3 + 1.0 / (rr + 0.8);
       const mobileBoost = compactRef.current ? 1.8 : 1;
+
+      // Gradual birth: each particle fades in at its random delay
+      const birthProgress = Math.min((time - particles.birthDelays[i]!) / 0.6, 1);
+      const birthScale = birthProgress > 0 ? birthProgress * birthProgress : 0;
+
       const scale =
         baseScale *
         pulse *
         (isNode ? 0.032 : 0.018) *
         proximityBoost *
-        mobileBoost;
+        mobileBoost *
+        birthScale;
 
       dummy.position.set(x, y, z);
       dummy.scale.setScalar(scale);
