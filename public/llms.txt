@@ -1,28 +1,43 @@
-# Turf — Multi-Agent Coordination
+# Field Project — Architecture as Counter-Force to Entropy
 
-> Turf is a CLI tool that coordinates AI coding agents working in parallel on the same codebase. It prevents file conflicts through scope leasing, isolates agents in separate git worktrees, and merges their work through an ordered queue. Install: `npm install @c-1k/turf`
+> Field Project is an architecture for event-driven systems where every event passes through a governed pipeline of ingress, decisioning, policy evaluation, execution, and audit — each responsibility isolated in a named service modeled after a physics particle.
 
-## Getting Started
+## Particles
 
-- [Quickstart](https://github.com/c-1k/fermion/blob/main/docs/QUICKSTART.md): Install and configure Turf in 5 minutes
-- [API Reference](https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md): Complete CLI command reference
+- **Boson** — Ingress & Canonicalization: accepts inputs, validates identity, wraps into EventEnvelope
+- **Fermion** — Decisioning & Orchestration: evaluates pipelines, produces ActionPlans
+- **Higgs** — Governance Brain: owns tenant config, evaluates policy (allow/deny/filter)
+- **Hadron** — Durability & State Machines: durable job store, step state machines
+- **Photon** — Connectors & Egress: typed connectors to external systems
+- **Neutrino** — Audit & Observability: append-only audit ledger, decision traces
+- **Quark** — Domain Objects: parses raw payloads into typed domain events
+- **Gluon** — Workflow Composition: workflow graph/DSL, branching, fan-out
+- **Graviton** — Time & Scheduling: cron triggers, delays, SLA timers
+- **Muon** — Sandbox Execution: safe execution of user-defined transforms
 
-## Core Concepts
+## Canonical Flow
 
-- [Scope Leasing](https://github.com/c-1k/fermion/blob/main/docs/GOVERNANCE.md): TTL-based file ownership via glob patterns
-- [Workspace Isolation](https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md#workspace): Isolated git worktrees per agent
-- [Merge Queue](https://github.com/c-1k/fermion/blob/main/docs/DAEMON.md): Ordered integration pipeline
-- [Hooks](https://github.com/c-1k/fermion/blob/main/docs/HOOKS.md): Pre-commit scope enforcement
+Boson → Fermion → Higgs (policy) → Photon (execute) → Neutrino (audit)
+Hadron provides durable state. Quark types payloads. Gluon composes workflows.
 
-## Integration Examples
+## The 12 Laws of the Field
 
-- [Claude Code](https://github.com/c-1k/fermion/blob/main/examples/two-agents/README.md): Two-agent coordination
-- [Cursor](https://github.com/c-1k/fermion/blob/main/examples/cursor-integration/README.md): Cursor workspace setup
-- [Aider](https://github.com/c-1k/fermion/blob/main/examples/aider-integration/README.md): Aider multi-agent coordination
-- [Copilot](https://github.com/c-1k/fermion/blob/main/examples/copilot-integration/README.md): GitHub Copilot workspace integration
+1. Policy Before Execution
+2. Decisioning Is Separate from Execution
+3. Observability Must Not Mutate Outcomes
+4. Events Are Immutable After Canonicalization
+5. Side Effects Must Be Declared, Typed, and Auditable
+6. Replay Must Be Safe and Deterministic
+7. Tenant Isolation at Every Layer
+8. Configuration Is Externalized
+9. Boundaries Are Explicit and Enforced
+10. Deny by Default
+11. Build Only the Missing Layer
+12. Entropy Increases by Default
 
-## Optional
+## Pages
 
-- [Troubleshooting](https://github.com/c-1k/fermion/blob/main/docs/TROUBLESHOOTING.md): Common issues and solutions
-- [FAQ](https://github.com/c-1k/fermion/blob/main/docs/FAQ.md): Frequently asked questions
-- [Design Decisions](https://github.com/c-1k/fermion/blob/main/docs/DESIGN-DECISIONS.md): Architecture rationale
+- [Home](https://fieldproject.ai) — Immersive scroll experience with 3D quantum field visualization
+- [Particles](https://fieldproject.ai/particles) — Deep-dive into all 10 particles
+- [Laws](https://fieldproject.ai/laws) — The 12 Laws of the Field
+- [About](https://fieldproject.ai/about) — Entropy narrative, physics metaphor, two endgames

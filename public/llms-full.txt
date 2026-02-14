@@ -1,111 +1,279 @@
-# Turf — Multi-Agent Coordination for AI Coding Agents
+# Field Project — Architecture as Counter-Force to Entropy
+# Full Reference for LLMs
 
-## What is Turf?
+## Elevator Definition
 
-Turf is a CLI tool that coordinates AI coding agents working in parallel on the same codebase. When you run multiple AI agents (Claude Code, Cursor, Aider, Copilot, Devin, etc.) simultaneously, they inevitably edit the same files and create merge conflicts. Turf prevents this through three mechanisms:
+Field Project is an architecture for event-driven systems where every event
+passes through a governed pipeline of ingress, decisioning, policy evaluation,
+execution, and audit — each responsibility isolated in a named service modeled
+after a physics particle.
 
-1. **Scope Leasing**: Agents claim exclusive ownership of file patterns (e.g., `src/auth/**`) with a time-to-live. No two agents can claim overlapping scopes.
-2. **Workspace Isolation**: Each agent gets its own git worktree — a separate working directory with its own branch, sharing the same git history.
-3. **Merge Queue**: When agents finish, they submit work to an ordered queue. A daemon process merges items sequentially, eliminating race conditions.
+The particle metaphor is not decorative: each name encodes what the service does
+and, critically, what it must never do, making architectural violations legible
+by analogy. The "field" is the processing space governed by invariant laws that
+no single service can override.
 
-## Installation
+---
 
-```bash
-npm install @c-1k/turf
-npx @c-1k/turf init
+## The 10 Particles
+
+### 1. Boson — Ingress & Canonicalization
+
+- **Physics analog:** Force carrier — mediates the interaction between external
+  inputs and the internal field
+- **Role:** Accepts inputs from any source (webhook, queue, API call), validates
+  caller identity, normalizes the payload, and wraps it into an EventEnvelope
+  with a unique correlation ID, timestamp, and tenant context
+- **Outputs:** EventEnvelope (canonical event format for the field)
+- **Must never:** Make decisions about what happens to the event, execute side
+  effects, or drop events silently
+
+### 2. Fermion — Decisioning & Orchestration
+
+- **Physics analog:** Matter particle — the substance of computation, subject to
+  the exclusion principle (one decision per event)
+- **Role:** Receives an EventEnvelope, evaluates it against configured pipeline
+  rules, and produces an ActionPlan describing what should happen — without
+  executing anything
+- **Outputs:** ActionPlan (ordered list of declared intentions)
+- **Must never:** Execute side effects directly, bypass policy evaluation, or
+  modify the original event
+
+### 3. Higgs — Governance Brain
+
+- **Physics analog:** Higgs field — gives mass (authority) to other particles,
+  determining which actions are permitted
+- **Role:** Owns tenant configuration, policy rules, and feature flags. Evaluates
+  every ActionPlan against policy before execution. Returns allow, deny, or
+  filter verdicts
+- **Outputs:** PolicyVerdict (allow/deny/filter with audit metadata)
+- **Must never:** Execute actions itself, store event data, or be bypassed by
+  any other particle
+
+### 4. Hadron — Durability & State Machines
+
+- **Physics analog:** Composite particle — bound state that persists, providing
+  structure and memory
+- **Role:** Provides durable job storage, step-level state machines, and
+  checkpoint/resume capabilities. Ensures long-running workflows survive
+  process restarts
+- **Outputs:** JobState, checkpoint records, resume tokens
+- **Must never:** Make decisions about event routing, execute external side
+  effects, or violate state machine transition rules
+
+### 5. Photon — Connectors & Egress
+
+- **Physics analog:** Photon — carries energy (effects) to the outside world
+- **Role:** Typed connectors to external systems (APIs, databases, message
+  queues, email, SMS). Executes the declared side effects from an approved
+  ActionPlan
+- **Outputs:** ExecutionReceipt (success/failure with external system response)
+- **Must never:** Decide which actions to take (only executes approved plans),
+  modify event data, or operate without an approved PolicyVerdict
+
+### 6. Neutrino — Audit & Observability
+
+- **Physics analog:** Neutrino — passes through everything, observes without
+  interacting, nearly impossible to block
+- **Role:** Append-only audit ledger recording every decision, policy evaluation,
+  execution result, and state transition. Provides decision traces for
+  debugging and compliance
+- **Outputs:** AuditEntry, DecisionTrace, compliance reports
+- **Must never:** Mutate outcomes, block or delay the pipeline, or be disabled
+  by any other particle
+
+### 7. Quark — Domain Objects
+
+- **Physics analog:** Quark — fundamental building block, never observed in
+  isolation, always part of a larger structure
+- **Role:** Parses raw payloads into strongly typed domain events. Provides
+  schema validation, version negotiation, and type coercion
+- **Outputs:** Typed domain events (e.g., OrderCreated, PaymentReceived)
+- **Must never:** Make routing decisions, execute side effects, or accept
+  invalid payloads without error
+
+### 8. Gluon — Workflow Composition
+
+- **Physics analog:** Gluon — binds quarks together into hadrons, mediating
+  the strong force between workflow steps
+- **Role:** Workflow graph definition and DSL. Handles branching, fan-out,
+  fan-in, conditional steps, and parallel execution paths
+- **Outputs:** WorkflowGraph (DAG of steps with edges and conditions)
+- **Must never:** Execute steps directly, bypass policy checks on individual
+  steps, or create cycles in the workflow graph
+
+### 9. Graviton — Time & Scheduling
+
+- **Physics analog:** Graviton — mediates gravitational force, bending the
+  fabric of spacetime (event timing)
+- **Role:** Cron triggers, one-time scheduled events, delays, SLA timers,
+  and timeout enforcement. Injects time-based events into the field
+- **Outputs:** ScheduledEvent, TimerExpiry, SLABreach notifications
+- **Must never:** Make decisions about event content, execute side effects
+  directly, or silently drop scheduled events
+
+### 10. Muon — Sandbox Execution
+
+- **Physics analog:** Muon — heavier cousin of the electron, exists briefly
+  in a contained environment before decaying
+- **Role:** Safe, isolated execution of user-defined transforms, filters,
+  and custom logic. Runs in sandboxed environments with resource limits
+  and timeout enforcement
+- **Outputs:** TransformResult (transformed data or error)
+- **Must never:** Access resources outside its sandbox, execute without
+  resource limits, or persist state beyond its execution scope
+
+---
+
+## Canonical Flow
+
+The primary event processing pipeline:
+
+```
+Boson → Fermion → Higgs (policy) → Photon (execute) → Neutrino (audit)
 ```
 
-This creates a `.coord/` directory in your repo containing coordination state (leases, queue, tasks, events).
+Supporting particles provide cross-cutting capabilities:
+- **Hadron** provides durable state and checkpointing at every stage
+- **Quark** types payloads between Boson and Fermion
+- **Gluon** composes multi-step workflows within Fermion
+- **Graviton** injects time-based triggers into the pipeline via Boson
+- **Muon** executes user-defined transforms within sandboxed boundaries
 
-## Core Commands
+---
 
-### Scope Leasing
-```bash
-# Claim exclusive ownership of files
-turf claim --scope "src/auth/**" --intent "Implement JWT middleware" --ttl-min 60
+## Responsibility Matrix
 
-# Release a scope lease
-turf release --scope "src/auth/**"
+| Particle  | Decides | Executes | Observes | Persists | Governs |
+|-----------|---------|----------|----------|----------|---------|
+| Boson     |         |          |          |          |         |
+| Fermion   | ✓       |          |          |          |         |
+| Higgs     |         |          |          |          | ✓       |
+| Hadron    |         |          |          | ✓        |         |
+| Photon    |         | ✓        |          |          |         |
+| Neutrino  |         |          | ✓        |          |         |
+| Quark     |         |          |          |          |         |
+| Gluon     |         |          |          |          |         |
+| Graviton  |         |          |          |          |         |
+| Muon      |         | ✓*       |          |          |         |
 
-# Check active leases
-turf status --verbose
-```
+*Muon executes only within a sandbox, never against external systems.
 
-### Workspace Isolation
-```bash
-# Allocate an isolated worktree for an agent
-turf workspace allocate --name agent-1 --branch feat/auth --base main --worker agent-1
+Each particle has exactly one primary responsibility. No particle may assume
+another's role. This is enforced by the 12 Laws.
 
-# Release a worktree when done
-turf workspace release --name agent-1
-```
+---
 
-### Task Management
-```bash
-# Create a scoped task
-turf task create --title "Implement auth" --scope "src/auth/**" --priority high
+## The 12 Laws of the Field
 
-# Claim the next available task (acquires scope lease automatically)
-turf task claim --worker agent-1
-```
+### Law 1 — Policy Before Execution
+**Statement:** No side effect may execute without prior policy evaluation.
+**Rationale:** Every action must pass through Higgs before Photon can execute it.
+This ensures governance is structural, not optional. If policy evaluation fails
+or is unavailable, the pipeline halts — it never proceeds optimistically.
 
-### Merge Queue
-```bash
-# Submit completed work (pushes branch, enqueues, releases lease)
-turf done --risk low --gates fast --notes "Implemented JWT auth middleware"
+### Law 2 — Decisioning Is Separate from Execution
+**Statement:** The particle that decides what to do must never be the particle
+that does it.
+**Rationale:** Fermion produces ActionPlans; Photon executes them. This
+separation makes every decision auditable and every execution traceable to an
+explicit decision. It prevents "smart connectors" that make invisible choices.
 
-# Start the merge daemon
-turf daemon start
+### Law 3 — Observability Must Not Mutate Outcomes
+**Statement:** Audit and observability must be append-only and must never alter
+pipeline behavior.
+**Rationale:** Neutrino records everything but changes nothing. If observability
+could affect outcomes, the system would be unreliable under monitoring changes —
+a violation of determinism.
 
-# Check queue status
-turf queue
-```
+### Law 4 — Events Are Immutable After Canonicalization
+**Statement:** Once Boson wraps a payload into an EventEnvelope, no particle may
+modify its content.
+**Rationale:** Immutability guarantees that every particle downstream sees the
+same event. Without this, replay becomes non-deterministic and audit trails
+become unreliable.
 
-### Worker Management
-```bash
-# Register a worker
-turf worker register --id agent-1
+### Law 5 — Side Effects Must Be Declared, Typed, and Auditable
+**Statement:** Every side effect must appear as a declared intention in the
+ActionPlan, with a typed schema, before execution.
+**Rationale:** No hidden effects. If it is not in the plan, it does not happen.
+This makes the system's behavior fully inspectable before any external system
+is contacted.
 
-# Send heartbeat
-turf worker heartbeat --id agent-1
-```
+### Law 6 — Replay Must Be Safe and Deterministic
+**Statement:** Re-processing any event through the pipeline must produce the
+same decisions and, with idempotent connectors, the same outcomes.
+**Rationale:** Systems fail. Networks partition. Replay is not exceptional — it
+is the normal recovery mechanism. Determinism ensures replay does not create
+duplicate side effects or contradictory state.
 
-## Typical Agent Workflow
+### Law 7 — Tenant Isolation at Every Layer
+**Statement:** No tenant's data, configuration, or execution may leak into or
+affect another tenant's processing.
+**Rationale:** Multi-tenancy is a core architectural concern, not an application
+feature. Isolation is enforced at ingress (Boson), policy (Higgs), state
+(Hadron), execution (Photon), and audit (Neutrino).
 
-```
-1. turf workspace allocate --name agent-1 --branch feat/task --base main
-2. turf claim --scope "src/feature/**" --ttl-min 60
-3. [agent edits files within scope]
-4. [agent runs tests, linting, type checking]
-5. git add -A && git commit -m "feat: implement feature"
-6. turf done --risk low --gates fast --notes "Implemented feature"
-7. turf workspace release --name agent-1
-```
+### Law 8 — Configuration Is Externalized
+**Statement:** All behavior-altering configuration must live in Higgs, not in
+application code or environment variables scattered across services.
+**Rationale:** Centralized configuration makes the system's behavior auditable
+and changeable without redeployment. It prevents "configuration drift" where
+different services disagree on behavioral parameters.
 
-## Compatible Agents
+### Law 9 — Boundaries Are Explicit and Enforced
+**Statement:** Every particle declares its inputs, outputs, and invariants.
+Cross-boundary calls must go through typed interfaces.
+**Rationale:** Explicit boundaries prevent the "big ball of mud" failure mode.
+When boundaries are enforced, violations are compile-time or deploy-time errors,
+not runtime surprises.
 
-Turf works with any AI coding agent that can execute CLI commands:
-- Claude Code (Anthropic)
-- Cursor
-- Aider
-- GitHub Copilot Workspace
-- Devin (Cognition)
-- Windsurf (Codeium)
-- Roo Code
-- Any custom agent with shell access
+### Law 10 — Deny by Default
+**Statement:** Any action, event, or configuration not explicitly permitted by
+policy is denied.
+**Rationale:** Allowlisting is safer than denylisting. New event types, new
+action types, and new integrations must be explicitly enabled in Higgs policy
+before they can execute. This prevents accidental exposure.
 
-## Key Design Decisions
+### Law 11 — Build Only the Missing Layer
+**Statement:** Field exists only where other systems stop. If an existing layer
+can already solve the problem cleanly, Field must not duplicate it.
+**Rationale:** Architectural discipline means knowing what NOT to build. Every
+unnecessary layer adds entropy. Before proposing a new particle or capability,
+ask: does something that already exists handle this? If yes, integrate.
 
-- **File-based state**: All coordination state lives in `.coord/` as JSON files. No database, no server, no network dependency.
-- **Git-native**: Built on git worktrees and branches. Works with any git hosting provider.
-- **TTL-based leases**: Scope claims expire automatically, preventing deadlocks from crashed agents.
-- **Agent-agnostic**: No SDK integration required. If your agent can run `turf claim`, it can coordinate.
-- **Deterministic merges**: Queue items are merged in order, not in parallel. This eliminates a class of merge conflicts.
+### Law 12 — Entropy Increases by Default
+**Statement:** Without active governance, every system trends toward disorder —
+tangled dependencies, invisible side effects, untraceable decisions.
+**Rationale:** This is the foundational law. Field exists as a counter-force to
+entropy. The architecture, the particle boundaries, the laws themselves — all
+exist because without them, systems decay. Governance is not overhead; it is the
+only thing standing between order and chaos.
 
-## Links
+---
 
-- Source: https://github.com/c-1k/fermion
-- npm: https://www.npmjs.com/package/@c-1k/turf
-- Documentation: https://github.com/c-1k/fermion/tree/main/docs
-- Quickstart: https://github.com/c-1k/fermion/blob/main/docs/QUICKSTART.md
-- API Reference: https://github.com/c-1k/fermion/blob/main/docs/API-REFERENCE.md
+## The Two Endgames
+
+Every system, at sufficient scale, converges on one of two outcomes:
+
+**Endgame A — Entropy wins.** The system becomes a tangle of undocumented side
+effects, invisible decisions, and configuration scattered across dozens of
+services. No one can explain what happens when an event enters the system.
+Debugging requires archaeology. Changes require courage.
+
+**Endgame B — The Field holds.** Every event has a trace. Every decision has an
+author. Every side effect was declared before it executed. The system is not
+simple — but it is legible. New team members can follow an event from ingress
+to audit and understand every step. The architecture resists entropy not by
+preventing change, but by making change visible and governed.
+
+Field Project is a bet on Endgame B.
+
+---
+
+## Pages
+
+- [Home](https://fieldproject.ai) — Immersive scroll experience with 3D quantum field visualization
+- [Particles](https://fieldproject.ai/particles) — Deep-dive into all 10 particles
+- [Laws](https://fieldproject.ai/laws) — The 12 Laws of the Field
+- [About](https://fieldproject.ai/about) — Entropy narrative, physics metaphor, two endgames
