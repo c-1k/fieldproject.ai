@@ -51,19 +51,9 @@ const CLOUD_OUTER_MOBILE = 4.5;
 
 /* ── Vortex easter egg ── */
 const VORTEX_ZONE_RADIUS = 2.5;    // world-space units from center to trigger
-const VORTEX_SPEED = 0.225;         // ~84-124s/rev inner ring — quarter speed
+const VORTEX_SPEED = 0.225;         // ~84-124s/rev inner ring
 const VORTEX_ENGAGE = 0.12;         // slow onset (~8s to full strength)
 const VORTEX_DISENGAGE = 0.12;
-
-/* ── Singularity phases ── */
-const SINGULARITY_COLLAPSE_T = 0.1; // instant snap to singularity
-const SINGULARITY_EXPAND_T = 0.2;   // near-instant burst back to ring
-
-/** Smooth S-curve: slow start → fast middle → slow end */
-function smoothstep(t: number): number {
-  const c = Math.max(0, Math.min(1, t));
-  return c * c * (3 - 2 * c);
-}
 
 /**
  * Render text to offscreen canvas, sample lit pixel positions.
@@ -138,7 +128,6 @@ export default function ParticleCloud({
   const mouseMoved = useRef(false);
   const lastInteractTime = useRef(0);
   const vortexStrength = useRef(0);
-  const vortexTime = useRef(0);
 
   // Random 3D spin axis — unique every visit
   // Tilted 25–55° from Z so orbital plane has visible depth
@@ -432,7 +421,6 @@ export default function ParticleCloud({
         1,
         vortexStrength.current + VORTEX_ENGAGE * delta,
       );
-      vortexTime.current += delta;
       // Keep interaction alive while in vortex zone — bypass idle timeout
       lastInteractTime.current = time;
     } else {
@@ -440,10 +428,6 @@ export default function ParticleCloud({
         0,
         vortexStrength.current - VORTEX_DISENGAGE * delta,
       );
-      // Reset singularity sequence when fully disengaged
-      if (vortexStrength.current <= 0.01) {
-        vortexTime.current = 0;
-      }
     }
 
     // ── Cursor-driven formation strength ──
@@ -493,59 +477,31 @@ export default function ParticleCloud({
       const ty = particles.textTargets[i * 3 + 1]!;
       const tz = particles.textTargets[i * 3 + 2]!;
 
-      // ── 3-phase singularity vortex (3D Rodrigues' rotation) ──
+      // ── 3D Keplerian vortex (Rodrigues' rotation) ──
       let rx = rx0, ry = ry0, rz = rz0;
       if (vortexStrength.current > 0.01) {
-        const vt = vortexTime.current;
-        const vs = vortexStrength.current;
         const kx = spinAxis.current!.x;
         const ky = spinAxis.current!.y;
         const kz = spinAxis.current!.z;
 
-        if (vt < SINGULARITY_COLLAPSE_T) {
-          // Phase 1: Collapse to singularity
-          const collapseBlend = smoothstep(vt / SINGULARITY_COLLAPSE_T) * vs;
-          rx = rx0 * (1 - collapseBlend);
-          ry = ry0 * (1 - collapseBlend);
-          rz = rz0 * (1 - collapseBlend);
-        } else {
-          // Rodrigues' rotation around random 3D axis
-          const rotTime = vt - SINGULARITY_COLLAPSE_T;
-          // Perpendicular distance from spin axis → Keplerian radius
-          const dot0 = kx * rx0 + ky * ry0 + kz * rz0;
-          const rPerp = Math.sqrt(
-            rx0 * rx0 + ry0 * ry0 + rz0 * rz0 - dot0 * dot0,
-          );
-          const keplerW =
-            VORTEX_SPEED / Math.pow(Math.max(rPerp, 0.5), 1.5);
-          const vAngle = keplerW * rotTime;
-          const cosV = Math.cos(vAngle);
-          const sinV = Math.sin(vAngle);
-          // Cross product: k × v
-          const cx = ky * rz0 - kz * ry0;
-          const cy = kz * rx0 - kx * rz0;
-          const cz = kx * ry0 - ky * rx0;
-          // Rodrigues: v*cos + (k×v)*sin + k*(k·v)*(1-cos)
-          const rrx = rx0 * cosV + cx * sinV + kx * dot0 * (1 - cosV);
-          const rry = ry0 * cosV + cy * sinV + ky * dot0 * (1 - cosV);
-          const rrz = rz0 * cosV + cz * sinV + kz * dot0 * (1 - cosV);
-
-          if (vt < SINGULARITY_COLLAPSE_T + SINGULARITY_EXPAND_T) {
-            // Phase 2: Expand from singularity to rotating ring
-            const expandBlend =
-              smoothstep(
-                (vt - SINGULARITY_COLLAPSE_T) / SINGULARITY_EXPAND_T,
-              ) * vs;
-            rx = rrx * expandBlend;
-            ry = rry * expandBlend;
-            rz = rrz * expandBlend;
-          } else {
-            // Phase 3: Steady 3D Keplerian orbit
-            rx = rrx;
-            ry = rry;
-            rz = rrz;
-          }
-        }
+        // Perpendicular distance from spin axis → Keplerian radius
+        const dot0 = kx * rx0 + ky * ry0 + kz * rz0;
+        const rPerp = Math.sqrt(
+          rx0 * rx0 + ry0 * ry0 + rz0 * rz0 - dot0 * dot0,
+        );
+        const keplerW =
+          VORTEX_SPEED / Math.pow(Math.max(rPerp, 0.5), 1.5);
+        const vAngle = keplerW * vortexStrength.current * time;
+        const cosV = Math.cos(vAngle);
+        const sinV = Math.sin(vAngle);
+        // Cross product: k × v
+        const cx = ky * rz0 - kz * ry0;
+        const cy = kz * rx0 - kx * rz0;
+        const cz = kx * ry0 - ky * rx0;
+        // Rodrigues: v*cos + (k×v)*sin + k*(k·v)*(1-cos)
+        rx = rx0 * cosV + cx * sinV + kx * dot0 * (1 - cosV);
+        ry = ry0 * cosV + cy * sinV + ky * dot0 * (1 - cosV);
+        rz = rz0 * cosV + cz * sinV + kz * dot0 * (1 - cosV);
       }
 
       // Formation target: ring when no scroll, text when scrolled
