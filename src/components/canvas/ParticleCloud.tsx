@@ -289,8 +289,8 @@ export default function ParticleCloud({
 
     const spreadX = compact ? 2.8 : 5.5;
     const spreadY = compact ? 1.2 : 2.4;
-    const eventHorizon = compact ? 0.25 : 1.0;
-    const lensStrength = compact ? 0.4 : 1.8;
+    const eventHorizon = compact ? 0.5 : 2.2;
+    const lensStrength = compact ? 1.0 : 3.2;
 
     for (let i = 0; i < count; i++) {
       if (i < textPositions.length) {
@@ -301,26 +301,28 @@ export default function ParticleCloud({
         const r = Math.sqrt(x * x + y * y);
         const angle = Math.atan2(y, x);
 
-        const radialPush = (eventHorizon * eventHorizon) / (r + 0.3);
+        // Strong radial push — clears a void around center
+        const radialPush = (eventHorizon * eventHorizon) / (r + 0.2);
         const lensedR = r + radialPush * lensStrength;
 
         const tangentialWarp = (eventHorizon / (r + 0.4)) * 0.8;
         const lensedAngle = angle + tangentialWarp;
 
-        const flattenFactor = 0.45 + 0.45 * Math.min(r / 4, 1);
+        // Less vertical compression — let particles spread vertically
+        const flattenFactor = 0.65 + 0.25 * Math.min(r / 4, 1);
 
         particles.textTargets[i * 3] = lensedR * Math.cos(lensedAngle);
         particles.textTargets[i * 3 + 1] =
           lensedR * Math.sin(lensedAngle) * flattenFactor;
-        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
+        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
       } else {
-        // Extra particles: ambient halo around text
+        // Extra particles: wide halo around text formation
         const angle = Math.random() * Math.PI * 2;
-        const radius = eventHorizon + 0.3 + Math.random() * 3;
+        const radius = eventHorizon + 0.8 + Math.random() * 5;
         particles.textTargets[i * 3] = Math.cos(angle) * radius;
         particles.textTargets[i * 3 + 1] =
-          Math.sin(angle) * radius * 0.25;
-        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+          Math.sin(angle) * radius * 0.45;
+        particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
       }
     }
   }, [layout, count, compact, particles.textTargets, textPositions]);
