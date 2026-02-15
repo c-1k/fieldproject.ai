@@ -1,3 +1,5 @@
+import { PARTICLES } from "@/lib/particles";
+
 interface ParticleBlueprintProps {
   particleId: string;
   className?: string;
@@ -663,6 +665,8 @@ export default function ParticleBlueprint({ particleId, className = "" }: Partic
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-auto"
         style={{ color: "rgba(255,255,255,0.7)" }}
+        role="img"
+        aria-label={`Blueprint diagram for ${PARTICLES[particleId]?.name ?? particleId.charAt(0).toUpperCase() + particleId.slice(1)} particle`}
       >
         <Drawing />
       </svg>

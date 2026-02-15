@@ -18,11 +18,12 @@ import { useIsMobile, usePrefersReducedMotion } from "@/lib/useMobile";
 
 interface SceneProps {
   count: number;
+  boostCount: number;
   compact: boolean;
   formationText?: string;
 }
 
-function Scene({ count, compact, formationText }: SceneProps) {
+function Scene({ count, boostCount, compact, formationText }: SceneProps) {
   return (
     <>
       <ambientLight intensity={0.15} color="#8ba4c4" />
@@ -34,7 +35,7 @@ function Scene({ count, compact, formationText }: SceneProps) {
       <pointLight position={[0, 0, 2]} intensity={2.5} distance={6} color="#c8d8ec" />
       <pointLight position={[0, 0, 0]} intensity={1.2} distance={3} color="#e0e8f4" />
 
-      <ParticleCloud count={count} formationText={formationText} compact={compact} />
+      <ParticleCloud count={count} boostCount={boostCount} formationText={formationText} compact={compact} />
       <AdaptiveDpr pixelated />
     </>
   );
@@ -50,6 +51,7 @@ export default function QuantumField({ formationText }: QuantumFieldProps) {
 
   // Fewer particles on mobile; none if reduced motion
   const particleCount = reducedMotion ? 0 : isMobile ? 2200 : 5500;
+  const boostCount = reducedMotion ? 0 : isMobile ? 500 : 2000;
 
   // Lower DPR on mobile for performance
   const dpr: [number, number] = isMobile ? [1, 1.5] : [1, 2];
@@ -85,7 +87,7 @@ export default function QuantumField({ formationText }: QuantumFieldProps) {
         dpr={dpr}
         gl={{ antialias: !isMobile, alpha: true, powerPreference: "default" }}
       >
-        <Scene count={particleCount} compact={isMobile} formationText={formationText} />
+        <Scene count={particleCount} boostCount={boostCount} compact={isMobile} formationText={formationText} />
         {postProcessing}
       </Canvas>
     </div>

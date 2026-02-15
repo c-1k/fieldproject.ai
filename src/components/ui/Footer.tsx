@@ -46,14 +46,22 @@ export default function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-tertiary)]">
           <span>&copy; 2026 Field Project. All rights reserved.</span>
-          <a
-            href="https://github.com/fieldproject"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[var(--text-secondary)] transition-colors py-2"
-          >
-            GitHub
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/c-1k/fermion"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[var(--text-secondary)] transition-colors py-2"
+            >
+              GitHub
+            </a>
+            <a
+              href="mailto:hello@fieldproject.ai"
+              className="hover:text-[var(--text-secondary)] transition-colors py-2"
+            >
+              Contact
+            </a>
+          </div>
         </div>
       </div>
     </footer>

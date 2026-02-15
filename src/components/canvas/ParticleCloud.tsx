@@ -5,16 +5,25 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { PARTICLE_COLORS } from "@/lib/constants";
 import { particleVertexShader, particleFragmentShader } from "@/shaders/particle";
+import {
+  createInteractionState,
+  tickInteractions,
+  triggerClick,
+  type InteractionState,
+} from "./InteractionLayers";
+import { fieldState } from "@/lib/fieldState";
 
 interface ParticleCloudProps {
   count?: number;
+  boostCount?: number;
   formationText?: string;
   compact?: boolean;
 }
 
 /* ── Tensor network parameters ── */
 const NODE_COUNT = 150;
-const MAX_LINES = 600;
+const MAX_LINES = 800;          // 600 tensor + 200 reserved for interaction layers
+const INTERACTION_LINE_BUDGET = 200;
 const RECOMPUTE_EVERY = 15;
 const CONN_DIST = 0.45;
 
@@ -38,6 +47,7 @@ const IDLE_TIMEOUT = 8.0;       // seconds of no movement before decay begins
 const ENTROPY_JITTER_MULT = 6;  // jitter multiplier in full entropy
 const ENTROPY_DRIFT = 0.003;    // gentle brownian drift in entropy
 const BIRTH_DURATION = 2.5;     // seconds over which particles randomly appear
+const BOOST_STAGGER = 3.0;           // seconds to stagger boost particle births
 
 /* ── Ring + cloud shape ── */
 const RING_FLATNESS = 0.78;       // near-circular (1.0 = perfect circle)
@@ -108,15 +118,18 @@ const SCROLL_FORMATION_END = 0.15;   // fully formed by 15% scroll (~leaving her
 
 export default function ParticleCloud({
   count = 5500,
+  boostCount = 0,
   formationText = "FIELD PROJECT",
   compact = false,
 }: ParticleCloudProps) {
+  const totalCount = count + boostCount;
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const shaderRef = useRef<THREE.ShaderMaterial>(null);
   const mouse = useRef(new THREE.Vector2(0, 0));
   const mouseDown = useRef(false);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const frameCount = useRef(0);
+  const tensorLineCount = useRef(0);
   const compactRef = useRef(compact);
   compactRef.current = compact;
   const { camera } = useThree();
@@ -128,6 +141,12 @@ export default function ParticleCloud({
   const mouseMoved = useRef(false);
   const lastInteractTime = useRef(0);
   const vortexStrength = useRef(0);
+  const interactionState = useRef<InteractionState | null>(null);
+  const boostedRef = useRef(false);
+  const boostPendingRef = useRef(false);
+  if (!interactionState.current) {
+    interactionState.current = createInteractionState();
+  }
 
   // Random 3D spin axis — unique every visit
   // Tilted 25–55° from Z so orbital plane has visible depth
@@ -164,16 +183,16 @@ export default function ParticleCloud({
 
   /* ── Particle data ── */
   const particles = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const entropyPositions = new Float32Array(count * 3);
-    const ringTargets = new Float32Array(count * 3);
-    const textTargets = new Float32Array(count * 3);
-    const scales = new Float32Array(count);
-    const colorIndices = new Uint8Array(count);
-    const randomOffsets = new Float32Array(count);
-    const birthDelays = new Float32Array(count);
+    const positions = new Float32Array(totalCount * 3);
+    const entropyPositions = new Float32Array(totalCount * 3);
+    const ringTargets = new Float32Array(totalCount * 3);
+    const textTargets = new Float32Array(totalCount * 3);
+    const scales = new Float32Array(totalCount);
+    const colorIndices = new Uint8Array(totalCount);
+    const randomOffsets = new Float32Array(totalCount);
+    const birthDelays = new Float32Array(totalCount);
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < totalCount; i++) {
       const x = (Math.random() - 0.5) * ENTROPY_SPREAD_X;
       const y = (Math.random() - 0.5) * ENTROPY_SPREAD_Y;
       const z = (Math.random() - 0.5) * ENTROPY_SPREAD_Z;
@@ -200,7 +219,7 @@ export default function ParticleCloud({
 
       colorIndices[i] = Math.floor(Math.random() * PARTICLE_COLORS.length);
       randomOffsets[i] = Math.random() * Math.PI * 2;
-      birthDelays[i] = Math.random() * BIRTH_DURATION;
+      birthDelays[i] = i < count ? Math.random() * BIRTH_DURATION : 999999;
     }
     return {
       positions,
@@ -212,7 +231,7 @@ export default function ParticleCloud({
       randomOffsets,
       birthDelays,
     };
-  }, [count]);
+  }, [totalCount, count]);
 
   /* ── Tensor network line geometry (pre-allocated) ── */
   const lineMesh = useMemo(() => {
@@ -243,7 +262,7 @@ export default function ParticleCloud({
   useEffect(() => {
     if (!meshRef.current) return;
     const color = new THREE.Color();
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < totalCount; i++) {
       color.set(PARTICLE_COLORS[particles.colorIndices[i]!]!);
 
       if (i < NODE_COUNT) {
@@ -256,7 +275,7 @@ export default function ParticleCloud({
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
-  }, [count, particles.colorIndices]);
+  }, [totalCount, particles.colorIndices]);
 
   /* ── Event handlers ── */
   const handlePointerMove = useCallback((e: MouseEvent) => {
@@ -293,6 +312,23 @@ export default function ParticleCloud({
     mouseOnPage.current = false;
   }, []);
 
+  /* ── Click-to-trigger particle interactions ── */
+  const handleClick = useCallback((e: MouseEvent) => {
+    if (!interactionState.current || interactionState.current.layerMask <= 1) return;
+    // Project screen click to world-space
+    const nx = (e.clientX / window.innerWidth) * 2 - 1;
+    const ny = -(e.clientY / window.innerHeight) * 2 + 1;
+    const v = new THREE.Vector3(nx, ny, 0.5).unproject(camera);
+    const dir = v.sub(camera.position).normalize();
+    const dist = -camera.position.z / dir.z;
+    const world = camera.position.clone().addScaledVector(dir, dist);
+    triggerClick(interactionState.current, world.x, world.y, world.z);
+    // Activate particle boost on first click
+    if (!boostedRef.current && boostCount > 0) {
+      boostPendingRef.current = true;
+    }
+  }, [camera, boostCount]);
+
   useEffect(() => {
     const root = document.documentElement;
     window.addEventListener("mousemove", handlePointerMove);
@@ -300,6 +336,7 @@ export default function ParticleCloud({
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("click", handleClick);
     root.addEventListener("mouseenter", handleMouseEnter);
     root.addEventListener("mouseleave", handleMouseLeave);
     return () => {
@@ -308,6 +345,7 @@ export default function ParticleCloud({
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("click", handleClick);
       root.removeEventListener("mouseenter", handleMouseEnter);
       root.removeEventListener("mouseleave", handleMouseLeave);
     };
@@ -319,6 +357,7 @@ export default function ParticleCloud({
     handleMouseUp,
     handleMouseEnter,
     handleMouseLeave,
+    handleClick,
   ]);
 
   /* ── Compute ring formation targets (dense ring + cloud beyond) ── */
@@ -327,7 +366,7 @@ export default function ParticleCloud({
     const ringPeak = compact ? RING_PEAK_MOBILE : RING_PEAK_DESKTOP;
     const cloudOuter = compact ? CLOUD_OUTER_MOBILE : CLOUD_OUTER_DESKTOP;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < totalCount; i++) {
       const angle = Math.random() * Math.PI * 2;
 
       let radius;
@@ -348,7 +387,7 @@ export default function ParticleCloud({
         Math.sin(angle) * radius * flatness;
       particles.ringTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
     }
-  }, [count, compact, particles.ringTargets]);
+  }, [totalCount, compact, particles.ringTargets]);
 
   /* ── Compute text formation targets (scroll-driven, no lensing) ── */
   useEffect(() => {
@@ -357,7 +396,7 @@ export default function ParticleCloud({
     const spreadX = compact ? 2.8 : 5.5;
     const spreadY = compact ? 1.2 : 2.4;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < totalCount; i++) {
       if (i < textPositions.length) {
         const [nx, ny] = textPositions[i]!;
         // Direct text positions — no void, particles form the letters
@@ -374,7 +413,7 @@ export default function ParticleCloud({
         particles.textTargets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
       }
     }
-  }, [count, compact, particles.textTargets, textPositions]);
+  }, [totalCount, compact, particles.textTargets, textPositions]);
 
   /* ── Per-frame animation ── */
   useFrame((state, delta) => {
@@ -382,6 +421,15 @@ export default function ParticleCloud({
     const time = state.clock.elapsedTime;
     const dt = Math.min(delta * 60, 3);
     frameCount.current++;
+
+    // ── Activate boost particles on first click ──
+    if (boostPendingRef.current) {
+      boostPendingRef.current = false;
+      boostedRef.current = true;
+      for (let i = count; i < totalCount; i++) {
+        particles.birthDelays[i] = time + Math.random() * BOOST_STAGGER;
+      }
+    }
 
     // ── Consume mouse activity flag ──
     if (mouseMoved.current) {
@@ -461,7 +509,7 @@ export default function ParticleCloud({
       shaderRef.current.uniforms.uTime!.value = time;
     }
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < totalCount; i++) {
       let x = particles.positions[i * 3]!;
       let y = particles.positions[i * 3 + 1]!;
       let z = particles.positions[i * 3 + 2]!;
@@ -628,7 +676,8 @@ export default function ParticleCloud({
         cell.push(i);
       }
 
-      for (let i = 0; i < nodeCount && lc < MAX_LINES; i++) {
+      const tensorMax = MAX_LINES - INTERACTION_LINE_BUDGET;
+      for (let i = 0; i < nodeCount && lc < tensorMax; i++) {
         const ix = particles.positions[i * 3]!;
         const iy = particles.positions[i * 3 + 1]!;
         const iz = particles.positions[i * 3 + 2]!;
@@ -645,7 +694,7 @@ export default function ParticleCloud({
                   ((cz + dcz) * 83492791),
               );
               if (!cell) continue;
-              for (let ci = 0; ci < cell.length && lc < MAX_LINES; ci++) {
+              for (let ci = 0; ci < cell.length && lc < tensorMax; ci++) {
                 const j = cell[ci]!;
                 if (j <= i) continue;
                 const ddx = ix - particles.positions[j * 3]!;
@@ -667,18 +716,74 @@ export default function ParticleCloud({
         }
       }
 
-      const posAttr = lineMesh.geometry.getAttribute(
-        "position",
-      ) as THREE.BufferAttribute;
-      posAttr.needsUpdate = true;
-      lineMesh.geometry.setDrawRange(0, lc * 2);
+      tensorLineCount.current = lc;
     }
+
+    /* ── Interaction layers (progressive easter eggs) ── */
+    const iState = interactionState.current!;
+    const tensorLc = tensorLineCount.current;
+    const effectiveCount = boostedRef.current ? totalCount : count;
+    const result = tickInteractions(
+      iState,
+      particles.positions,
+      effectiveCount,
+      Math.min(NODE_COUNT, count),
+      meshRef.current,
+      linePositions,
+      tensorLc,
+      INTERACTION_LINE_BUDGET,
+      time,
+      delta,
+      inVortexZone,
+      vortexStrength.current,
+      compactRef.current,
+    );
+
+    // Update shared state for DOM components (DiscoveryHUD, Super8Overlay)
+    fieldState.dwellAccum = iState.dwellAccum;
+    fieldState.layerMask = iState.layerMask;
+
+    // Apply overrides — position offsets + scale multipliers
+    for (let oi = 0; oi < result.overrides.length; oi++) {
+      const ov = result.overrides[oi]!;
+      const idx = ov.index;
+      const px = particles.positions[idx * 3]! + (ov.positionOffset?.x ?? 0);
+      const py = particles.positions[idx * 3 + 1]! + (ov.positionOffset?.y ?? 0);
+      const pz = particles.positions[idx * 3 + 2]! + (ov.positionOffset?.z ?? 0);
+
+      dummy.position.set(px, py, pz);
+      // Re-read the current scale from the matrix we already set
+      meshRef.current.getMatrixAt(idx, dummy.matrix);
+      const currentScale = dummy.matrix.elements[0]!; // uniform scale
+      dummy.scale.setScalar(currentScale * (ov.scaleMultiplier ?? 1));
+      dummy.position.set(px, py, pz);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(idx, dummy.matrix);
+
+      if (ov.colorOverride && meshRef.current.instanceColor) {
+        meshRef.current.setColorAt(idx, ov.colorOverride);
+        result.colorsDirty = true;
+      }
+    }
+
+    if (result.overrides.length > 0) {
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+    if (result.colorsDirty && meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true;
+    }
+
+    // Update line draw range (tensor + interaction lines)
+    const totalLines = tensorLc + result.extraLineCount;
+    const posAttr = lineMesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+    posAttr.needsUpdate = true;
+    lineMesh.geometry.setDrawRange(0, totalLines * 2);
   });
 
   return (
     <group>
       <primitive object={lineMesh} />
-      <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+      <instancedMesh ref={meshRef} args={[undefined, undefined, totalCount]}>
         <icosahedronGeometry args={[1, 1]} />
         <shaderMaterial
           ref={shaderRef}
