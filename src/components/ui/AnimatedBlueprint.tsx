@@ -63,6 +63,7 @@ export default function AnimatedBlueprint({ particleId, className }: AnimatedBlu
       <div
         ref={ref}
         className={visible ? "blueprint-visible" : "blueprint-hidden"}
+        aria-label={`Blueprint for ${particleId} particle`}
       >
         <ParticleBlueprint particleId={particleId} className={className} />
       </div>

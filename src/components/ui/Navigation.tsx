@@ -27,6 +27,16 @@ export default function Navigation() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md">
       <nav className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
