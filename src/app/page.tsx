@@ -1,60 +1,89 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { CORE_PARTICLES, PARTICLES } from "@/lib/particles";
+import { fieldState } from "@/lib/fieldState";
 import ScrollIndicator from "@/components/ui/ScrollIndicator";
 import ParticleBlueprint from "@/components/ui/ParticleBlueprint";
+import DiscoveryHUD from "@/components/ui/DiscoveryHUD";
+import Super8Overlay from "@/components/ui/Super8Overlay";
+
+// TEST MODE: 8s — production: 30
+const SUPER8_THRESHOLD = 8;
+
+/** Poll fieldState at 5Hz for DiscoveryHUD + Super8 */
+function useFieldState() {
+  const [state, setState] = useState({ dwellAccum: 0, layerMask: 0 });
+  useEffect(() => {
+    const id = setInterval(() => {
+      setState({ dwellAccum: fieldState.dwellAccum, layerMask: fieldState.layerMask });
+    }, 200);
+    return () => clearInterval(id);
+  }, []);
+  return state;
+}
 
 export default function Home() {
+  const { dwellAccum, layerMask } = useFieldState();
+  const super8Active = dwellAccum >= SUPER8_THRESHOLD;
+
   return (
     <main className="relative">
 
       {/* ===== SECTION 1: HERO ===== */}
       <section className="relative min-h-screen flex items-center justify-center">
         {/* Title + subtitles — centered in the black hole */}
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <Super8Overlay active={super8Active}>
+          <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 2.0 }}
+            >
+              <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter font-display mb-4">
+                Field Project
+              </h1>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.0, delay: 2.8 }}
+            >
+              <p className="text-sm sm:text-base tracking-[0.2em] uppercase text-[var(--text-tertiary)] font-light">
+                Architecture as counter-force to entropy
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.0, delay: 3.4 }}
+            >
+              <p className="text-sm text-[var(--text-tertiary)] mt-4">
+                10 particles. 12 laws. One canonical path.
+              </p>
+            </motion.div>
+          </div>
+        </Super8Overlay>
+
+        {/* Scroll indicator — also flickers out */}
+        <Super8Overlay active={super8Active}>
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 2.0 }}
-          >
-            <h1 className="text-5xl sm:text-7xl font-bold tracking-tighter font-display mb-4">
-              Field Project
-            </h1>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.0, delay: 2.8 }}
-          >
-            <p className="text-sm sm:text-base tracking-[0.2em] uppercase text-[var(--text-tertiary)] font-light">
-              Architecture as counter-force to entropy
-            </p>
-          </motion.div>
-          <motion.div
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.0, delay: 3.4 }}
+            transition={{ duration: 0.8, delay: 4.0 }}
           >
-            <p className="text-sm text-[var(--text-tertiary)] mt-4">
-              10 particles. 12 laws. One canonical path.
-            </p>
+            <ScrollIndicator />
           </motion.div>
-        </div>
-
-        {/* Scroll indicator — pinned to bottom */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 4.0 }}
-        >
-          <ScrollIndicator />
-        </motion.div>
+        </Super8Overlay>
 
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg)] to-transparent" />
       </section>
+
+      {/* Discovery HUD — shows layer unlock notifications */}
+      <DiscoveryHUD layerMask={layerMask} dwellTime={dwellAccum} />
 
       {/* Section divider */}
       <div className="max-w-5xl mx-auto px-6">
