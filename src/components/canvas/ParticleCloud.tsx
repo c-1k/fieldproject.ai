@@ -5,6 +5,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { PARTICLE_COLORS } from "@/lib/constants";
 import { particleVertexShader, particleFragmentShader } from "@/shaders/particle";
+import {
+  createInteractionState,
+  tickInteractions,
+  type InteractionState,
+} from "./InteractionLayers";
 
 interface ParticleCloudProps {
   count?: number;
@@ -14,7 +19,8 @@ interface ParticleCloudProps {
 
 /* ── Tensor network parameters ── */
 const NODE_COUNT = 150;
-const MAX_LINES = 600;
+const MAX_LINES = 700;          // 600 tensor + 100 reserved for interaction layers
+const INTERACTION_LINE_BUDGET = 100;
 const RECOMPUTE_EVERY = 15;
 const CONN_DIST = 0.45;
 
@@ -117,6 +123,7 @@ export default function ParticleCloud({
   const mouseDown = useRef(false);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const frameCount = useRef(0);
+  const tensorLineCount = useRef(0);
   const compactRef = useRef(compact);
   compactRef.current = compact;
   const { camera } = useThree();
@@ -128,6 +135,10 @@ export default function ParticleCloud({
   const mouseMoved = useRef(false);
   const lastInteractTime = useRef(0);
   const vortexStrength = useRef(0);
+  const interactionState = useRef<InteractionState | null>(null);
+  if (!interactionState.current) {
+    interactionState.current = createInteractionState();
+  }
 
   // Random 3D spin axis — unique every visit
   // Tilted 25–55° from Z so orbital plane has visible depth
@@ -628,7 +639,8 @@ export default function ParticleCloud({
         cell.push(i);
       }
 
-      for (let i = 0; i < nodeCount && lc < MAX_LINES; i++) {
+      const tensorMax = MAX_LINES - INTERACTION_LINE_BUDGET;
+      for (let i = 0; i < nodeCount && lc < tensorMax; i++) {
         const ix = particles.positions[i * 3]!;
         const iy = particles.positions[i * 3 + 1]!;
         const iz = particles.positions[i * 3 + 2]!;
@@ -645,7 +657,7 @@ export default function ParticleCloud({
                   ((cz + dcz) * 83492791),
               );
               if (!cell) continue;
-              for (let ci = 0; ci < cell.length && lc < MAX_LINES; ci++) {
+              for (let ci = 0; ci < cell.length && lc < tensorMax; ci++) {
                 const j = cell[ci]!;
                 if (j <= i) continue;
                 const ddx = ix - particles.positions[j * 3]!;
@@ -667,12 +679,63 @@ export default function ParticleCloud({
         }
       }
 
-      const posAttr = lineMesh.geometry.getAttribute(
-        "position",
-      ) as THREE.BufferAttribute;
-      posAttr.needsUpdate = true;
-      lineMesh.geometry.setDrawRange(0, lc * 2);
+      tensorLineCount.current = lc;
     }
+
+    /* ── Interaction layers (progressive easter eggs) ── */
+    const iState = interactionState.current!;
+    const tensorLc = tensorLineCount.current;
+    const result = tickInteractions(
+      iState,
+      particles.positions,
+      count,
+      Math.min(NODE_COUNT, count),
+      meshRef.current,
+      linePositions,
+      tensorLc,
+      INTERACTION_LINE_BUDGET,
+      time,
+      delta,
+      inVortexZone,
+      vortexStrength.current,
+      compactRef.current,
+    );
+
+    // Apply overrides — position offsets + scale multipliers
+    for (let oi = 0; oi < result.overrides.length; oi++) {
+      const ov = result.overrides[oi]!;
+      const idx = ov.index;
+      const px = particles.positions[idx * 3]! + (ov.positionOffset?.x ?? 0);
+      const py = particles.positions[idx * 3 + 1]! + (ov.positionOffset?.y ?? 0);
+      const pz = particles.positions[idx * 3 + 2]! + (ov.positionOffset?.z ?? 0);
+
+      dummy.position.set(px, py, pz);
+      // Re-read the current scale from the matrix we already set
+      meshRef.current.getMatrixAt(idx, dummy.matrix);
+      const currentScale = dummy.matrix.elements[0]!; // uniform scale
+      dummy.scale.setScalar(currentScale * (ov.scaleMultiplier ?? 1));
+      dummy.position.set(px, py, pz);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(idx, dummy.matrix);
+
+      if (ov.colorOverride && meshRef.current.instanceColor) {
+        meshRef.current.setColorAt(idx, ov.colorOverride);
+        result.colorsDirty = true;
+      }
+    }
+
+    if (result.overrides.length > 0) {
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+    if (result.colorsDirty && meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true;
+    }
+
+    // Update line draw range (tensor + interaction lines)
+    const totalLines = tensorLc + result.extraLineCount;
+    const posAttr = lineMesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+    posAttr.needsUpdate = true;
+    lineMesh.geometry.setDrawRange(0, totalLines * 2);
   });
 
   return (
